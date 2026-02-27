@@ -177,6 +177,21 @@ namespace Config {
     };
 
     /**
+     * Sensor configuration structure
+     * Controls which I2C sensors are enabled and their addresses
+     */
+    struct SensorConfig {
+        bool sht4x_enabled;
+        uint8_t sht4x_address;   // 0x44 or 0x45
+        bool bme680_enabled;
+        uint8_t bme680_address;   // 0x76 or 0x77
+
+        SensorConfig()
+            : sht4x_enabled(true), sht4x_address(0x44),
+              bme680_enabled(false), bme680_address(0x77) {}
+    };
+
+    /**
      * Touch control configuration structure
      * Maps touch pins to preset indices for physical control
      */
@@ -374,6 +389,18 @@ namespace Config {
          * @param config Touch configuration to save
          */
         void saveTouchConfig(const TouchConfig &config);
+
+        /**
+         * Load sensor configuration from NVS
+         * @return SensorConfig structure
+         */
+        SensorConfig loadSensorConfig();
+
+        /**
+         * Save sensor configuration to NVS
+         * @param config Sensor configuration to save
+         */
+        void saveSensorConfig(const SensorConfig &config);
 
         /**
          * Load MQTT configuration from NVS

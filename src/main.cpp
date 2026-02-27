@@ -9,6 +9,7 @@
 #include "Config.h"
 #include "WebServerManager.h"
 #include "sensor/SHT4x.h"
+#include "sensor/BME680.h"
 #include "sensor/DeviceSensor.h"
 #include "task/SensorMonitor.h"
 #include "StatusLed.h"
@@ -29,27 +30,35 @@ void setup() {
 #ifdef ARDUINO
     // Load device configuration
     Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
-    uint8_t sensor_address = deviceConfig.sensor_i2c_address;
-    
-    // Hardwired I2C pins for QT Py ESP32-S3
+
+    // Hardwired I2C pins for QT Py ESP32-S2
     const uint8_t i2c_sda_pin = 8;
     const uint8_t i2c_scl_pin = 9;
-    
+
     Serial.printf("Initializing I2C on pins SDA=%u, SCL=%u\n", i2c_sda_pin, i2c_scl_pin);
-    Serial.printf("Looking for sensor at address 0x%02X\n", sensor_address);
 
     // Initialize I2C with hardwired pins
     Wire.begin(i2c_sda_pin, i2c_scl_pin);
-    
-    // Initialize SHT4x sensor
-    try {
-        auto sht4x = std::make_unique<Sensor::SHT4x>(sensor_address);
-        sensorController.addSensor(std::move(sht4x));
-        Serial.println("SHT4x sensor added to controller");
-    } catch (const std::exception &e) {
-        Serial.printf("Error initializing SHT4x sensor: %s\n", e.what());
-    } catch (...) {
-        Serial.println("Unknown error initializing SHT4x sensor");
+
+    // Config-driven sensor creation
+    Config::SensorConfig sensorConfig = config.loadSensorConfig();
+
+    if (sensorConfig.sht4x_enabled) {
+        try {
+            sensorController.addSensor(std::make_unique<Sensor::SHT4x>(sensorConfig.sht4x_address));
+            Serial.printf("SHT4x sensor added at 0x%02X\n", sensorConfig.sht4x_address);
+        } catch (...) {
+            Serial.println("Error initializing SHT4x sensor");
+        }
+    }
+
+    if (sensorConfig.bme680_enabled) {
+        try {
+            sensorController.addSensor(std::make_unique<Sensor::BME680>(sensorConfig.bme680_address));
+            Serial.printf("BME680 sensor added at 0x%02X\n", sensorConfig.bme680_address);
+        } catch (...) {
+            Serial.println("Error initializing BME680 sensor");
+        }
     }
 
     // Add device metrics sensor (RSSI, chip temp, free heap, uptime)

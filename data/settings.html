@@ -64,6 +64,55 @@
         </div>
 
         <div class="section">
+            <h2>I2C Sensors</h2>
+            <p>Configure which sensors are connected to the I2C bus (STEMMA QT connector). Changes require a restart.</p>
+
+            <button class="btn btn-primary" onclick="scanI2C()" id="scanBtn">Scan I2C Bus</button>
+            <div id="scanResults" style="display: none; margin-top: 10px;">
+                <div class="info-box">
+                    <strong>Discovered Devices:</strong>
+                    <div id="scanDeviceList" style="margin-top: 5px;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="sht4xEnabled">
+                        Enable SHT4x (Temperature / Humidity)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="sht4xAddress">SHT4x Address</label>
+                    <select id="sht4xAddress" style="width: 120px; padding: 8px;">
+                        <option value="68">0x44</option>
+                        <option value="69">0x45</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>
+                        <input type="checkbox" id="bme680Enabled">
+                        Enable BME680 (Temperature / Humidity / Pressure)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="bme680Address">BME680 Address</label>
+                    <select id="bme680Address" style="width: 120px; padding: 8px;">
+                        <option value="118">0x76</option>
+                        <option value="119">0x77</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSensorConfig()" style="margin-top: 10px;">Save Sensor Settings</button>
+
+            <div class="warning-box">
+                <strong>Note:</strong> The device will restart after saving sensor settings to apply changes.
+            </div>
+        </div>
+
+        <div class="section">
             <h2>MQTT</h2>
             <p>Publish sensor measurements to an MQTT broker for integration with home automation systems.</p>
 
@@ -544,11 +593,85 @@
         }
     }
 
+    // I2C Sensor Functions
+    async function loadSensorConfig() {
+        try {
+            const response = await fetch('/api/sensors/config');
+            const data = await response.json();
+
+            document.getElementById('sht4xEnabled').checked = data.sht4x_enabled;
+            document.getElementById('sht4xAddress').value = data.sht4x_address;
+            document.getElementById('bme680Enabled').checked = data.bme680_enabled;
+            document.getElementById('bme680Address').value = data.bme680_address;
+        } catch (error) {
+            console.error('Failed to load sensor config:', error);
+        }
+    }
+
+    async function saveSensorConfig() {
+        const config = {
+            sht4x_enabled: document.getElementById('sht4xEnabled').checked,
+            sht4x_address: parseInt(document.getElementById('sht4xAddress').value),
+            bme680_enabled: document.getElementById('bme680Enabled').checked,
+            bme680_address: parseInt(document.getElementById('bme680Address').value)
+        };
+
+        if (!confirm('Save sensor settings?\n\nThe device will restart to apply changes.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/sensors/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(config)
+            });
+
+            if (response.ok) {
+                alert('Sensor settings saved. Device is restarting...');
+            } else {
+                const data = await response.json();
+                alert('Failed to save sensor settings: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Failed to save sensor config:', error);
+            alert('Error saving sensor settings');
+        }
+    }
+
+    async function scanI2C() {
+        const btn = document.getElementById('scanBtn');
+        btn.disabled = true;
+        btn.textContent = 'Scanning...';
+
+        try {
+            const response = await fetch('/api/i2c/scan');
+            const data = await response.json();
+
+            const list = document.getElementById('scanDeviceList');
+            if (data.devices.length === 0) {
+                list.textContent = 'No devices found.';
+            } else {
+                list.innerHTML = data.devices.map(d =>
+                    `${d.address_hex}` + (d.type ? ` - ${d.type}` : ' - Unknown')
+                ).join('<br>');
+            }
+            document.getElementById('scanResults').style.display = 'block';
+        } catch (error) {
+            console.error('Failed to scan I2C:', error);
+            alert('Error scanning I2C bus');
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Scan I2C Bus';
+    }
+
     // Load device info on page load
     loadDeviceName();
     loadHardwareSettings();
     loadOTAStatus();
     loadTouchConfig();
+    loadSensorConfig();
     loadMqttConfig();
 </script>
 </body>

@@ -500,6 +500,44 @@ namespace Config {
                       config.enabled, config.threshold);
 #endif
     }
+    SensorConfig ConfigManager::loadSensorConfig() {
+        SensorConfig sensorConfig;
+
+#ifdef ARDUINO
+        prefs.begin(NAMESPACE, true); // Read-only mode
+
+        sensorConfig.sht4x_enabled = prefs.getBool("sns_sht4x_en", true);
+        sensorConfig.sht4x_address = prefs.getUChar("sns_sht4x_addr", 0x44);
+        sensorConfig.bme680_enabled = prefs.getBool("sns_bme680_en", false);
+        sensorConfig.bme680_address = prefs.getUChar("sns_bme680_addr", 0x77);
+
+        prefs.end();
+
+        Serial.printf("SensorConfig: Loaded - SHT4x=%d@0x%02X, BME680=%d@0x%02X\n",
+                      sensorConfig.sht4x_enabled, sensorConfig.sht4x_address,
+                      sensorConfig.bme680_enabled, sensorConfig.bme680_address);
+#endif
+
+        return sensorConfig;
+    }
+
+    void ConfigManager::saveSensorConfig(const SensorConfig &config) {
+#ifdef ARDUINO
+        prefs.begin(NAMESPACE, false); // Read-write mode
+
+        prefs.putBool("sns_sht4x_en", config.sht4x_enabled);
+        prefs.putUChar("sns_sht4x_addr", config.sht4x_address);
+        prefs.putBool("sns_bme680_en", config.bme680_enabled);
+        prefs.putUChar("sns_bme680_addr", config.bme680_address);
+
+        prefs.end();
+
+        Serial.printf("SensorConfig: Saved - SHT4x=%d@0x%02X, BME680=%d@0x%02X\n",
+                      config.sht4x_enabled, config.sht4x_address,
+                      config.bme680_enabled, config.bme680_address);
+#endif
+    }
+
     MqttConfig ConfigManager::loadMqttConfig() {
         MqttConfig mqttConfig;
 

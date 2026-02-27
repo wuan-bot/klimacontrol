@@ -14,6 +14,7 @@
 #include "TimerScheduler.h"
 #include "TouchController.h"
 #include "MqttClient.h"
+#include "I2CScanner.h"
 
 #ifdef ARDUINO
 #include <ArduinoJson.h>
@@ -1188,6 +1189,76 @@ void WebServerManager::setupAPIRoutes() {
         serializeJson(doc, response);
         request->send(success ? 200 : 500, CONTENT_TYPE_JSON, response);
     });
+
+    // GET /api/i2c/scan - Scan I2C bus for devices
+    server.on("/api/i2c/scan", HTTP_GET, [](AsyncWebServerRequest *request) {
+        auto devices = I2CScanner::scan();
+
+        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+        JsonArray arr = doc.createNestedArray("devices");
+
+        for (const auto& dev : devices) {
+            JsonObject obj = arr.createNestedObject();
+            obj["address"] = dev.address;
+
+            char hexBuf[8];
+            snprintf(hexBuf, sizeof(hexBuf), "0x%02X", dev.address);
+            obj["address_hex"] = String(hexBuf);
+
+            if (dev.knownType) {
+                obj["type"] = dev.knownType;
+            }
+        }
+
+        String response;
+        serializeJson(doc, response);
+        request->send(200, CONTENT_TYPE_JSON, response);
+    });
+
+    // GET /api/sensors/config - Get sensor configuration
+    server.on("/api/sensors/config", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        Config::SensorConfig sensorConfig = config.loadSensorConfig();
+
+        StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+        doc["sht4x_enabled"] = sensorConfig.sht4x_enabled;
+        doc["sht4x_address"] = sensorConfig.sht4x_address;
+        doc["bme680_enabled"] = sensorConfig.bme680_enabled;
+        doc["bme680_address"] = sensorConfig.bme680_address;
+
+        String response;
+        serializeJson(doc, response);
+        request->send(200, CONTENT_TYPE_JSON, response);
+    });
+
+    // POST /api/sensors/config - Save sensor configuration (triggers restart)
+    server.on("/api/sensors/config", HTTP_POST,
+              []([[maybe_unused]] AsyncWebServerRequest *request) {
+              },
+              nullptr,
+              [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
+                  if (index == 0) {
+                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      DeserializationError error = deserializeJson(doc, data, len);
+
+                      if (error) {
+                          request->send(400, CONTENT_TYPE_JSON, JSON_RESPONSE_ERROR_INVALID_JSON);
+                          return;
+                      }
+
+                      Config::SensorConfig sensorConfig = config.loadSensorConfig();
+
+                      if (doc.containsKey("sht4x_enabled")) sensorConfig.sht4x_enabled = doc["sht4x_enabled"];
+                      if (doc.containsKey("sht4x_address")) sensorConfig.sht4x_address = doc["sht4x_address"];
+                      if (doc.containsKey("bme680_enabled")) sensorConfig.bme680_enabled = doc["bme680_enabled"];
+                      if (doc.containsKey("bme680_address")) sensorConfig.bme680_address = doc["bme680_address"];
+
+                      config.saveSensorConfig(sensorConfig);
+                      config.requestRestart(1000);
+
+                      request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
+                  }
+              }
+    );
 
     // GET /api/mqtt - Get MQTT configuration
     server.on("/api/mqtt", HTTP_GET, [this](AsyncWebServerRequest *request) {
