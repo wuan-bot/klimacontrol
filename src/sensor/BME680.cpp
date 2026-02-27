@@ -48,8 +48,8 @@ namespace Sensor {
             float t = bme.temperature;
             float rh = bme.humidity;
             reading.measurements.push_back({"temperature", t, "°C", "BME680", false});
-            reading.measurements.push_back({"humidity", rh, "%", "BME680", false});
-            reading.measurements.push_back({"dew_point", calcDewPoint(t, rh), "°C", "BME680", true});
+            reading.measurements.push_back({"relative humidity", rh, "%", "BME680", false});
+            reading.measurements.push_back({"dew point", calcDewPoint(t, rh), "°C", "BME680", true});
             reading.measurements.push_back({"pressure", bme.pressure / 100.0f, "hPa", "BME680", false});
 
             reading.valid = true;

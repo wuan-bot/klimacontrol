@@ -51,8 +51,8 @@ namespace Sensor {
             float t = temp.temperature;
             float rh = humidity.relative_humidity;
             reading.measurements.push_back({"temperature", t, "°C", "SHT4x", false});
-            reading.measurements.push_back({"humidity", rh, "%", "SHT4x", false});
-            reading.measurements.push_back({"dew_point", calcDewPoint(t, rh), "°C", "SHT4x", true});
+            reading.measurements.push_back({"relative humidity", rh, "%", "SHT4x", false});
+            reading.measurements.push_back({"dew point", calcDewPoint(t, rh), "°C", "SHT4x", true});
 
             reading.valid = true;
         } else {
