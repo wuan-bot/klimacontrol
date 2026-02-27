@@ -45,18 +45,27 @@ namespace Sensor {
 
 #ifdef ARDUINO
         if (bme.performReading()) {
-            reading.measurements.push_back({"temperature", bme.temperature, "°C", "BME680", false});
-            reading.measurements.push_back({"humidity", bme.humidity, "%", "BME680", false});
+            float t = bme.temperature;
+            float rh = bme.humidity;
+            reading.measurements.push_back({"temperature", t, "°C", "BME680", false});
+            reading.measurements.push_back({"humidity", rh, "%", "BME680", false});
+            reading.measurements.push_back({"dew_point", calcDewPoint(t, rh), "°C", "BME680", true});
             reading.measurements.push_back({"pressure", bme.pressure / 100.0f, "hPa", "BME680", false});
+
             reading.valid = true;
         } else {
             reading.valid = false;
             Serial.println("BME680: Failed to read sensor data");
         }
 #else
-        reading.measurements.push_back({"temperature", 23.0f, "°C", "BME680", false});
-        reading.measurements.push_back({"humidity", 50.0f, "%", "BME680", false});
+        float t = 23.0f;
+        float rh = 50.0f;
+        reading.measurements.push_back({"temperature", t, "°C", "BME680", false});
+        reading.measurements.push_back({"humidity", rh, "%", "BME680", false});
         reading.measurements.push_back({"pressure", 1013.25f, "hPa", "BME680", false});
+
+        reading.measurements.push_back({"dew_point", calcDewPoint(t, rh), "°C", "BME680", true});
+
         reading.valid = true;
 #endif
 

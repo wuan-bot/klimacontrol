@@ -1,6 +1,7 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <variant>
@@ -17,6 +18,14 @@ namespace Sensor {
         const char* sensor;     // e.g., "SHT4x", "BME680"
         bool calculated;        // true for derived values (dew point, sea-level pressure)
     };
+
+    // Magnus formula dew point from temperature (°C) and relative humidity (%)
+    inline float calcDewPoint(float temperature, float humidity) {
+        constexpr float a = 17.625f;
+        constexpr float b = 243.04f;
+        float gamma = a * temperature / (b + temperature) + logf(humidity / 100.0f);
+        return b * gamma / (a - gamma);
+    }
 
     struct SensorReading {
         std::vector<Measurement> measurements;
