@@ -13,14 +13,7 @@ namespace Sensor {
 #ifdef ARDUINO
         Serial.println("BME680: Initializing sensor...");
 
-        Wire1.setPins(SDA1, SCL1);
-
-        if (!Wire1.begin()) {
-            Serial.println("BME680: Failed to initialize I2C");
-            return false;
-        }
-
-        if (!bme.begin(i2cAddress, &Wire1)) {
+        if (!bme.begin(i2cAddress)) {
             Serial.println("BME680: Failed to initialize sensor");
             return false;
         }
@@ -82,8 +75,8 @@ namespace Sensor {
 #ifdef ARDUINO
         if (!initialized) return false;
 
-        Wire1.beginTransmission(i2cAddress);
-        return Wire1.endTransmission() == 0;
+        Wire.beginTransmission(i2cAddress);
+        return Wire.endTransmission() == 0;
 #else
         return initialized;
 #endif

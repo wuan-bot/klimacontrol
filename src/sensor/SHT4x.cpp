@@ -16,13 +16,6 @@ namespace Sensor {
 #ifdef ARDUINO
         Serial.println("SHT4x: Initializing sensor...");
 
-        Wire1.setPins(SDA1, SCL1); // Zwingend erforderlich für ESP32-S2!
-
-        if (!Wire1.begin()) {
-            Serial.println("SHT4x: Failed to initialize I2C");
-            return false;
-        }
-
         if (!sht4x.begin(&Wire1)) {
             Serial.println("SHT4x: Failed to initialize sensor");
             return false;
