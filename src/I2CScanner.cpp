@@ -24,8 +24,8 @@ namespace I2CScanner {
         Serial.println("I2CScanner: Scanning Wire bus...");
 
         for (uint8_t addr = 0x08; addr <= 0x77; addr++) {
-            Wire.beginTransmission(addr);
-            uint8_t error = Wire.endTransmission();
+            Wire1.beginTransmission(addr);
+            uint8_t error = Wire1.endTransmission();
 
             if (error == 0) {
                 const char* type = identifyAddress(addr);

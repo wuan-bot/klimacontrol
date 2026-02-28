@@ -38,7 +38,11 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     Serial.printf("[OTA] Free heap before request: %u bytes\n", ESP.getFreeHeap());
     Serial.printf("[OTA] WiFi RSSI: %d dBm\n", WiFi.RSSI());
 
-    WiFiClientSecure client = createSecureClient();
+    // WiFiClientSecure client = createSecureClient();
+
+    WiFiClientSecure client;
+    // client.setInsecure();
+    client.setCACertBundle(nullptr);
 
     HTTPClient http;
     String apiUrl = String("https://api.github.com/repos/") + owner + "/" + repo + "/releases/latest";
@@ -61,48 +65,8 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     Serial.println("[OTA] Sending HTTPS GET request...");
     int httpCode = http.GET();
 
-    // Detailed error reporting
     if (httpCode < 0) {
-        Serial.printf("[OTA] HTTP GET failed with error: %d\n", httpCode);
-        switch(httpCode) {
-            case HTTPC_ERROR_CONNECTION_FAILED:
-                Serial.println("[OTA] Connection failed - check network/firewall");
-                break;
-            case HTTPC_ERROR_SEND_HEADER_FAILED:
-                Serial.println("[OTA] Failed to send HTTP headers");
-                break;
-            case HTTPC_ERROR_SEND_PAYLOAD_FAILED:
-                Serial.println("[OTA] Failed to send HTTP payload");
-                break;
-            case HTTPC_ERROR_NOT_CONNECTED:
-                Serial.println("[OTA] Not connected to server");
-                break;
-            case HTTPC_ERROR_CONNECTION_LOST:
-                Serial.println("[OTA] Connection lost during transfer");
-                break;
-            case HTTPC_ERROR_NO_STREAM:
-                Serial.println("[OTA] No HTTP stream available");
-                break;
-            case HTTPC_ERROR_NO_HTTP_SERVER:
-                Serial.println("[OTA] Server didn't respond with HTTP");
-                break;
-            case HTTPC_ERROR_TOO_LESS_RAM:
-                Serial.println("[OTA] Not enough RAM for operation");
-                break;
-            case HTTPC_ERROR_ENCODING:
-                Serial.println("[OTA] Encoding error");
-                break;
-            case HTTPC_ERROR_STREAM_WRITE:
-                Serial.println("[OTA] Stream write error");
-                break;
-            case HTTPC_ERROR_READ_TIMEOUT:
-                Serial.println("[OTA] Read timeout");
-                break;
-            default:
-                Serial.println("[OTA] Unknown error");
-                break;
-        }
-        Serial.printf("[OTA] Free heap after error: %u bytes\n", ESP.getFreeHeap());
+        Serial.printf("[OTA] HTTP GET failed: %s (free heap: %u bytes)\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
         http.end();
         return false;
     }
@@ -252,6 +216,8 @@ bool OTAUpdater::performUpdate(
 
     Serial.println("[OTA] Sending HTTPS GET request for firmware download...");
     int httpCode = http.GET();
+
+    Serial.printf("[OTA] error: %s\n", HTTPClient::errorToString(httpCode).c_str());
 
     // Handle redirects manually if needed
     if (httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {

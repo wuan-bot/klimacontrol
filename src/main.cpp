@@ -33,7 +33,7 @@ void setup() {
     Serial.printf("Initializing I2C");
 
     // Initialize secondary I2C bus (STEMMA QT connector)
-    Wire.begin(SDA1, SCL1);
+    Wire1.begin(SDA1, SCL1);
 
     Config::SensorConfig sensorConfig = config.loadSensorConfig();
 

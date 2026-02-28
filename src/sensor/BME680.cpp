@@ -84,8 +84,8 @@ namespace Sensor {
 #ifdef ARDUINO
         if (!initialized) return false;
 
-        Wire.beginTransmission(i2cAddress);
-        return Wire.endTransmission() == 0;
+        Wire1.beginTransmission(i2cAddress);
+        return Wire1.endTransmission() == 0;
 #else
         return initialized;
 #endif
