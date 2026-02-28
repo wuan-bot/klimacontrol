@@ -73,6 +73,11 @@ private:
 
     void configureUsingAPMode();
 
+    /**
+     * Configure mDNS responder with hostname and HTTP service advertisement
+     */
+    void configureMDNS();
+
 public:
     /**
      * Network constructor

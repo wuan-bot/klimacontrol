@@ -39,6 +39,37 @@ String Network::generateHostname() {
 #endif
 }
 
+void Network::configureMDNS() {
+#ifdef ARDUINO
+    String hostname = generateHostname();
+
+    if (MDNS.begin(hostname.c_str())) {
+        Serial.print("mDNS responder started: ");
+        Serial.print(hostname);
+        Serial.println(".local");
+
+        Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
+        bool deviceNameNotEmpty = deviceConfig.device_name[0] != '\0';
+        bool deviceNameIsNotDeviceId = strcmp(deviceConfig.device_name, deviceConfig.device_id) != 0;
+        bool hasCustomName = (deviceNameNotEmpty && deviceNameIsNotDeviceId);
+
+        String instanceName;
+        if (hasCustomName) {
+            instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_name);
+        } else {
+            instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_id);
+        }
+
+        Serial.printf("mDNS instance name: '%s'", instanceName.c_str());
+        MDNS.setInstanceName(instanceName.c_str());
+
+        MDNS.addService("http", "tcp", 80);
+    } else {
+        Serial.println("Error starting mDNS responder!");
+    }
+#endif
+}
+
 void Network::setStatusLedState(LedState state) {
     if (statusLed) {
         statusLed->setState(state);
@@ -69,35 +100,7 @@ void Network::startAP() {
     Serial.print("AP IP address: ");
     Serial.println(ip_address);
 
-    // Start mDNS responder
-    String hostname = generateHostname();
-
-    if (MDNS.begin(hostname.c_str())) {
-        Serial.print("mDNS responder started: ");
-        Serial.print(hostname);
-        Serial.println(".local");
-
-        // Load device config for custom name
-        Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
-        bool hasCustomName = (deviceConfig.device_name[0] != '\0' &&
-                              strcmp(deviceConfig.device_name, deviceConfig.device_id) != 0);
-
-        // Set instance name with custom device name or device ID
-        String instanceName;
-        if (hasCustomName) {
-            instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_name);
-        } else {
-            instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_id);
-        }
-        MDNS.setInstanceName(instanceName.c_str());
-        Serial.print("mDNS instance name: ");
-        Serial.println(instanceName);
-
-        // Advertise HTTP service
-        MDNS.addService("http", "tcp", 80);
-    } else {
-        Serial.println("Error starting mDNS responder!");
-    }
+    configureMDNS();
 
     // Start captive portal (redirects all DNS to this device)
     captivePortal.begin();
@@ -171,44 +174,17 @@ void Network::startSTA(const char *ssid, const char *password) {
         Serial.printf("  Auto Reconnect: %d\n", WiFi.getAutoReconnect());
         Serial.println();
 
-        // Start mDNS responder
+        configureMDNS();
+
         String hostname = generateHostname();
-
-        if (MDNS.begin(hostname.c_str())) {
-            Serial.print("mDNS responder started: ");
-            Serial.print(hostname);
-            Serial.println(".local");
-
-            // Load device config for custom name
-            Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
-            bool hasCustomName = (deviceConfig.device_name[0] != '\0' &&
-                                  strcmp(deviceConfig.device_name, deviceConfig.device_id) != 0);
-
-            // Set instance name with custom device name or device ID
-            String instanceName;
-            if (hasCustomName) {
-                instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_name);
-            } else {
-                instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_id);
-            }
-            MDNS.setInstanceName(instanceName.c_str());
-            Serial.print("mDNS instance name: ");
-            Serial.println(instanceName);
-
-            // Advertise HTTP service
-            MDNS.addService("http", "tcp", 80);
-
-            Serial.print("You can now access ");
-            Serial.print(Constants::PROJECT_NAME);
-            Serial.println(" at:");
-            Serial.print("  http://");
-            Serial.print(hostname);
-            Serial.println(".local/");
-            Serial.print("  or http://");
-            Serial.println(WiFi.localIP());
-        } else {
-            Serial.println("Error starting mDNS responder!");
-        }
+        Serial.print("You can now access ");
+        Serial.print(Constants::PROJECT_NAME);
+        Serial.println(" at:");
+        Serial.print("  http://");
+        Serial.print(hostname);
+        Serial.println(".local/");
+        Serial.print("  or http://");
+        Serial.println(WiFi.localIP());
 
         // Start NTP client
         ntpClient.begin();

@@ -173,39 +173,23 @@ void SensorController::readSensors() {
 }
 
 float SensorController::getTemperature() const {
-    for (const auto &m : currentMeasurements) {
-        if (m.type == Sensor::MeasurementType::Temperature) {
-            return std::get<float>(m.value);
-        }
-    }
-    return NAN;
+    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::Temperature);
+    return m ? std::get<float>(m->value) : NAN;
 }
 
 float SensorController::getRelativeHumidity() const {
-    for (const auto &m : currentMeasurements) {
-        if (m.type == Sensor::MeasurementType::RelativeHumidity) {
-            return std::get<float>(m.value);
-        }
-    }
-    return NAN;
+    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::RelativeHumidity);
+    return m ? std::get<float>(m->value) : NAN;
 }
 
 float SensorController::getDewPoint() const {
-    for (const auto &m : currentMeasurements) {
-        if (m.type == Sensor::MeasurementType::DewPoint) {
-            return std::get<float>(m.value);
-        }
-    }
-    return NAN;
+    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::DewPoint);
+    return m ? std::get<float>(m->value) : NAN;
 }
 
 int32_t SensorController::getVocIndex() const {
-    for (const auto &m : currentMeasurements) {
-        if (m.type == Sensor::MeasurementType::VocIndex) {
-            return std::get<int32_t>(m.value);
-        }
-    }
-    return -1;
+    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::VocIndex);
+    return m ? std::get<int32_t>(m->value) : -1;
 }
 
 Sensor::Sensor *SensorController::getSensor(size_t index) {
