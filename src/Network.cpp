@@ -251,7 +251,7 @@ void Network::configureUsingAPMode() {
     Serial.println("Network task started");
 
     // Initialize status LED early (works without WiFi) - uses built-in NeoPixel
-    statusLed = std::make_unique<StatusLed>(PIN_NEOPIXEL, 1); // Built-in NeoPixel, 1 pixel
+    statusLed = std::make_unique<StatusLed>(); // Built-in NeoPixel, 1 pixel
     statusLed->begin();
     statusLed->setState(LedState::BLINK_SLOW); // Indicate booting
     

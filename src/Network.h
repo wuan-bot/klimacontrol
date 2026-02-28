@@ -55,7 +55,7 @@ private:
 
     /**
      * Generate mDNS hostname from device ID
-     * Creates hostname like "ledz-aabbcc" from device ID (removes dash)
+     * Creates hostname like "klima-aabbcc" from device ID (removes dash)
      */
     String generateHostname();
 

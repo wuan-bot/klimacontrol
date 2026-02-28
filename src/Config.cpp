@@ -122,10 +122,6 @@ namespace Config {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, true); // Read-only mode
 
-        config.brightness = prefs.getUChar("brightness", 128);
-        config.num_pixels = prefs.getUShort("num_pixels", 1);
-        config.led_pin = prefs.getUChar("led_pin", PIN_NEOPIXEL);
-        config.cycle_time = prefs.getUShort("cycle_time", 10);
         prefs.getString("device_name", config.device_name, sizeof(config.device_name));
         
         // Load sensor configuration
@@ -154,10 +150,6 @@ namespace Config {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false); // Read-write mode
 
-        prefs.putUChar("brightness", config.brightness);
-        prefs.putUShort("num_pixels", config.num_pixels);
-        prefs.putUChar("led_pin", config.led_pin);
-        prefs.putUShort("cycle_time", config.cycle_time);
         prefs.putString("device_name", config.device_name);
         
         // Save sensor configuration
@@ -165,8 +157,6 @@ namespace Config {
         prefs.putFloat("target_temperature", config.target_temperature);
         prefs.putBool("temperature_control_enabled", config.temperature_control_enabled);
         
-        // Note: device_id is derived from MAC, not stored
-
         prefs.end();
 #endif
     }
@@ -190,7 +180,7 @@ namespace Config {
                  mac_bytes[3], mac_bytes[4], mac_bytes[5]);
         return String(id);
 #else
-        return String("ledz-000000");
+        return String("klima-000000");
 #endif
     }
 

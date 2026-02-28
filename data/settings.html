@@ -256,31 +256,6 @@
         }
     }
 
-    // Load current hardware settings from /api/status endpoint
-    async function loadHardwareSettings() {
-        try {
-            const response = await fetch('/api/status');
-            const data = await response.json();
-            const numPixels = data.num_pixels || 300;
-            const ledPin = data.led_pin || 35;
-            const cycleTime = data.cycle_time || 10;
-            document.getElementById('currentNumPixels').textContent = numPixels;
-            document.getElementById('currentLedPin').textContent = ledPin;
-            document.getElementById('currentCycleTime').textContent = cycleTime;
-
-            // Set the select value
-            const cycleTimeSelect = document.getElementById('cycleTime');
-            if (cycleTimeSelect) {
-                cycleTimeSelect.value = cycleTime.toString();
-            }
-        } catch (error) {
-            console.error('Failed to load hardware settings:', error);
-            document.getElementById('currentNumPixels').textContent = 'Error';
-            document.getElementById('currentLedPin').textContent = 'Error';
-            document.getElementById('currentCycleTime').textContent = 'Error';
-        }
-    }
-
     // Update device name
     async function updateDeviceName() {
         const name = document.getElementById('deviceName').value;

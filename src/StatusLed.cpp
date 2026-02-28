@@ -1,7 +1,7 @@
 #include "StatusLed.h"
 
-StatusLed::StatusLed(uint8_t pin, uint8_t numPixels) 
-    : pixel(numPixels, pin, NEO_GRB + NEO_KHZ800), state(LedState::OFF), 
+StatusLed::StatusLed()
+    : pixel(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800), state(LedState::OFF),
       lastChange(0), ledOn(false), brightness(0.0f), direction(1),
       currentColor(0x000000), progress(0.0f), mqttFlashStart(0) {
 }

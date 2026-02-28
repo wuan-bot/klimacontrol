@@ -464,51 +464,6 @@ void WebServerManager::setupAPIRoutes() {
                       Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
                       bool changed = false;
 
-                      // Update num_pixels if provided
-                      if (doc.containsKey("num_pixels")) {
-                          uint16_t num_pixels = doc["num_pixels"];
-
-                          if (num_pixels < 1 || num_pixels > 1000) {
-                              request->send(400, CONTENT_TYPE_JSON,
-                                            R"({"success":false,"error":"Number of pixels must be between 1 and 1000"})");
-                              return;
-                          }
-
-                          deviceConfig.num_pixels = num_pixels;
-                          Serial.printf("Number of pixels updated: %u\n", num_pixels);
-                          changed = true;
-                      }
-
-                      // Update led_pin if provided
-                      if (doc.containsKey("led_pin")) {
-                          uint8_t led_pin = doc["led_pin"];
-
-                          if (led_pin > 48) {
-                              request->send(400, CONTENT_TYPE_JSON,
-                                            R"({"success":false,"error":"LED pin must be between 0 and 48"})");
-                              return;
-                          }
-
-                          deviceConfig.led_pin = led_pin;
-                          Serial.printf("LED pin updated: %u\n", led_pin);
-                          changed = true;
-                      }
-
-                      // Update cycle_time if provided
-                      if (doc.containsKey("cycle_time")) {
-                          uint16_t cycle_time = doc["cycle_time"];
-
-                          if (cycle_time < 1 || cycle_time > 1000) {
-                              request->send(400, CONTENT_TYPE_JSON,
-                                            R"({"success":false,"error":"Cycle time must be between 1 and 1000"})");
-                              return;
-                          }
-
-                          deviceConfig.cycle_time = cycle_time;
-                          Serial.printf("Cycle time updated: %u ms\n", cycle_time);
-                          changed = true;
-                      }
-
                       if (!changed) {
                           request->send(400, CONTENT_TYPE_JSON,
                                         R"({"success":false,"error":"No valid parameters provided"})");
@@ -550,9 +505,6 @@ void WebServerManager::setupAPIRoutes() {
         // Device info
         Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
         doc["device_id"] = deviceConfig.device_id;
-        doc["num_pixels"] = deviceConfig.num_pixels;
-        doc["led_pin"] = deviceConfig.led_pin;
-        doc["cycle_time"] = deviceConfig.cycle_time;
 
         // Sensor statistics
         JsonObject statsJson = doc.createNestedObject("stats");
