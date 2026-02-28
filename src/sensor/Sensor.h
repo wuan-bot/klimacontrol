@@ -81,6 +81,16 @@ namespace Sensor {
         return b * gamma / (a - gamma);
     }
 
+    // Hypsometric formula: sea-level pressure from station pressure, temperature (°C), and elevation (m)
+    inline float calcSeaLevelPressure(float pressure, float temperatureCelsius, float elevation) {
+        float temperatureK = temperatureCelsius + 273.15f;
+        return pressure * powf(temperatureK / (temperatureK + 0.0065f * elevation), -5.255f);
+    }
+
+    struct ReadConfig {
+        float elevation = 0.0f; // meters above sea level
+    };
+
     inline const Measurement *findMeasurement(const std::vector<Measurement> &measurements, MeasurementType type) {
         for (const auto &m: measurements) {
             if (m.type == type) return &m;
@@ -108,7 +118,8 @@ namespace Sensor {
 
         virtual SensorReading read() = 0;
 
-        virtual SensorReading read(const std::vector<Measurement> &prior) {
+        virtual SensorReading read(const ReadConfig &config, const std::vector<Measurement> &prior) {
+            (void) config;
             (void) prior;
             return read();
         }

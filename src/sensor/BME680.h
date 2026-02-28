@@ -23,13 +23,15 @@ namespace Sensor {
 
         bool begin() override;
         SensorReading read() override;
+        SensorReading read(const ReadConfig& config, const std::vector<Measurement>& prior) override;
         const char* getType() const override { return type(); }
         TypeSpan provides() const override {
             static constexpr MeasurementType types[] = {
                 MeasurementType::Temperature, MeasurementType::RelativeHumidity,
-                MeasurementType::DewPoint, MeasurementType::Pressure
+                MeasurementType::DewPoint, MeasurementType::Pressure,
+                MeasurementType::SeaLevelPressure
             };
-            return {types, 4};
+            return {types, 5};
         }
     };
 

@@ -23,7 +23,7 @@ namespace Sensor {
 
         bool begin() override;
         SensorReading read() override;
-        SensorReading read(const std::vector<Measurement>& prior) override;
+        SensorReading read(const ReadConfig& config, const std::vector<Measurement>& prior) override;
         const char* getType() const override { return type(); }
         TypeSpan provides() const override {
             static constexpr MeasurementType types[] = {MeasurementType::VocIndex};

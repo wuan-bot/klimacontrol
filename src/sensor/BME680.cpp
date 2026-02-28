@@ -32,6 +32,11 @@ namespace Sensor {
     }
 
     SensorReading BME680::read() {
+        return read({}, {});
+    }
+
+    SensorReading BME680::read(const ReadConfig& config, const std::vector<Measurement>& prior) {
+        (void) prior;
         SensorReading reading;
         reading.timestamp = millis();
 
@@ -44,10 +49,16 @@ namespace Sensor {
         if (bme->performReading()) {
             float temperature = bme->temperature;
             float relative_humidity = bme->humidity;
+            float stationPressure = bme->pressure / 100.0f;
             reading.measurements.push_back({MeasurementType::Temperature, temperature, getType(), false});
             reading.measurements.push_back({MeasurementType::RelativeHumidity, relative_humidity, getType(), false});
             reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(temperature, relative_humidity), getType(), true});
-            reading.measurements.push_back({MeasurementType::Pressure, bme->pressure / 100.0f, getType(), false});
+            reading.measurements.push_back({MeasurementType::Pressure, stationPressure, getType(), false});
+
+            if (config.elevation > 0.0f) {
+                float seaLevel = calcSeaLevelPressure(stationPressure, temperature, config.elevation);
+                reading.measurements.push_back({MeasurementType::SeaLevelPressure, seaLevel, getType(), true});
+            }
 
             reading.valid = true;
         } else {
@@ -57,11 +68,16 @@ namespace Sensor {
 #else
         float t = 23.0f;
         float rh = 50.0f;
+        float stationPressure = 1013.25f;
         reading.measurements.push_back({MeasurementType::Temperature, t, getType(), false});
         reading.measurements.push_back({MeasurementType::RelativeHumidity, rh, getType(), false});
-        reading.measurements.push_back({MeasurementType::Pressure, 1013.25f, getType(), false});
-
+        reading.measurements.push_back({MeasurementType::Pressure, stationPressure, getType(), false});
         reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(t, rh), getType(), true});
+
+        if (config.elevation > 0.0f) {
+            float seaLevel = calcSeaLevelPressure(stationPressure, t, config.elevation);
+            reading.measurements.push_back({MeasurementType::SeaLevelPressure, seaLevel, getType(), true});
+        }
 
         reading.valid = true;
 #endif

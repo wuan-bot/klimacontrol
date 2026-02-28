@@ -24,10 +24,11 @@ namespace Sensor {
     }
 
     SensorReading SGP40::read() {
-        return read({});
+        return read({}, {});
     }
 
-    SensorReading SGP40::read(const std::vector<Measurement>& prior) {
+    SensorReading SGP40::read(const ReadConfig& config, const std::vector<Measurement>& prior) {
+        (void) config;
         SensorReading reading;
         reading.timestamp = millis();
 

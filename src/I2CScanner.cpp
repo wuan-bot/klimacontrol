@@ -2,6 +2,7 @@
 #include "sensor/SHT4x.h"
 #include "sensor/BME680.h"
 #include "sensor/SGP40.h"
+#include "sensor/BMP3xx.h"
 
 #ifdef ARDUINO
 #include <Wire.h>
@@ -14,6 +15,7 @@ namespace I2CScanner {
         {Sensor::SHT4x::type(), Sensor::SHT4x::addresses(), Sensor::SHT4x::addressCount()},
         {Sensor::BME680::type(), Sensor::BME680::addresses(), Sensor::BME680::addressCount()},
         {Sensor::SGP40::type(), Sensor::SGP40::addresses(), Sensor::SGP40::addressCount()},
+        {Sensor::BMP3xx::type(), Sensor::BMP3xx::addresses(), Sensor::BMP3xx::addressCount()},
     };
     static constexpr size_t REGISTRY_SIZE = sizeof(REGISTRY) / sizeof(REGISTRY[0]);
 

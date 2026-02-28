@@ -109,12 +109,15 @@ void SensorController::readSensors() {
     bool anyValid = false;
     uint32_t timestamp = millis();
 
+    Sensor::ReadConfig readConfig;
+    readConfig.elevation = config.loadDeviceConfig().elevation;
+
     for (auto &sensor : sensors) {
         if (sensor) {
             // if (sensor->isConnected()) {
                 // Serial.printf("SensorController: Reading from sensor %s...\n", sensor->getType());
                 uint32_t readStart = millis();
-                Sensor::SensorReading reading = sensor->read(allMeasurements);
+                Sensor::SensorReading reading = sensor->read(readConfig, allMeasurements);
                 uint32_t readTime = millis() - readStart;
                 if (reading.valid) {
 #if DEBUG
@@ -146,19 +149,6 @@ void SensorController::readSensors() {
                 Serial.printf("SensorController: Sensor %s - not connected\n", sensor->getType());
             }
         // }
-    }
-
-    // Derive sea-level pressure from station pressure and configured elevation
-    if (anyValid) {
-        float elevation = config.loadDeviceConfig().elevation;
-        if (elevation > 0.0f) {
-            const Sensor::Measurement* pressure = Sensor::findMeasurement(allMeasurements, Sensor::MeasurementType::Pressure);
-            if (pressure) {
-                float stationPressure = std::get<float>(pressure->value);
-                float seaLevelPressure = stationPressure / powf(1.0f - elevation / 44330.0f, 5.255f);
-                allMeasurements.push_back({Sensor::MeasurementType::SeaLevelPressure, seaLevelPressure, pressure->sensor, true});
-            }
-        }
     }
 
     if (anyValid) {
