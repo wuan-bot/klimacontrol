@@ -122,9 +122,18 @@ float SensorController::getTemperature() const {
     return NAN;
 }
 
-float SensorController::getHumidity() const {
+float SensorController::getRelativeHumidity() const {
     for (const auto &m : currentMeasurements) {
-        if (strcmp(m.type, "humidity") == 0) {
+        if (strcmp(m.type, "relative humidity") == 0) {
+            return std::get<float>(m.value);
+        }
+    }
+    return NAN;
+}
+
+float SensorController::getDewPoint() const {
+    for (const auto &m : currentMeasurements) {
+        if (strcmp(m.type, "dew point") == 0) {
             return std::get<float>(m.value);
         }
     }

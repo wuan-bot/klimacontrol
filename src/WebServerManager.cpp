@@ -48,7 +48,6 @@ static const char* JSON_RESPONSE_ERROR_QUEUE_FULL = "{\"success\":false,\"error\
 // API Paths
 static const char* API_PATH_WIFI = "/api/wifi";
 static const char* API_PATH_STATUS = "/api/status";
-static const char* API_PATH_BRIGHTNESS = "/api/brightness";
 static const char* API_PATH_LAYOUT = "/api/layout";
 static const char* API_PATH_TIMERS = "/api/timers";
 static const char* API_PATH_RESTART = "/api/restart";
@@ -163,26 +162,13 @@ void WebServerManager::setupAPIRoutes() {
 
         if (sensorController.isDataValid()) {
             // Backward-compatible top-level fields
-            float temp = sensorController.getTemperature();
-            float hum = sensorController.getHumidity();
-            if (!isnan(temp)) doc["temperature"] = temp;
-            if (!isnan(hum)) doc["humidity"] = hum;
+            float temperature = sensorController.getTemperature();
+            if (!isnan(temperature)) doc["temperature"] = temperature;
+            float relativeHumidity = sensorController.getRelativeHumidity();
+            if (!isnan(relativeHumidity)) doc["relativeHumidity"] = relativeHumidity;
+            float dewPoint = sensorController.getDewPoint();
+            if (!isnan(dewPoint)) doc["dewPoint"] = dewPoint;
             doc["sensor_timestamp"] = sensorController.getLastReadingTimestamp();
-
-            // Generic measurements array
-            JsonArray measurements = doc.createNestedArray("measurements");
-            for (const auto &m : sensorController.getMeasurements()) {
-                JsonObject mObj = measurements.createNestedObject();
-                mObj["type"] = m.type;
-                if (auto* i = std::get_if<int32_t>(&m.value)) {
-                    mObj["value"] = *i;
-                } else {
-                    mObj["value"] = std::get<float>(m.value);
-                }
-                mObj["unit"] = m.unit;
-                mObj["sensor"] = m.sensor;
-                mObj["calculated"] = m.calculated;
-            }
         }
 
         // Temperature control info
@@ -218,7 +204,7 @@ void WebServerManager::setupAPIRoutes() {
 
         // Add current sensor data
         float currentTemp = sensorController.getTemperature();
-        float currentHum = sensorController.getHumidity();
+        float currentHum = sensorController.getRelativeHumidity();
         doc["current_temperature"] = sensorController.isDataValid() ? currentTemp : static_cast<float>(NAN);
         doc["current_humidity"] = sensorController.isDataValid() ? currentHum : static_cast<float>(NAN);
         doc["data_valid"] = sensorController.isDataValid();

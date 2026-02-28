@@ -57,7 +57,9 @@ public:
      * Get current humidity (first humidity measurement found)
      * @return humidity value, or NAN if not available
      */
-    float getHumidity() const;
+    float getRelativeHumidity() const;
+
+    float getDewPoint() const;
 
     /**
      * Get timestamp of last reading

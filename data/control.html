@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 id="pageTitle">ledz</h1>
+            <h1 id="pageTitle">klimacontrol</h1>
             <div class="device-id">
                 <span id="deviceId">Loading...</span>
                 <span id="firmwareVersion" style="opacity: 0.7; font-size: 0.9em; margin-left: 10px;"></span>
@@ -63,7 +63,7 @@
             const deviceIdElement = document.getElementById('deviceId');
 
             if (currentStatus.device_id) {
-                const hostname = "ledz-" + currentStatus.device_id.toLowerCase();
+                const hostname = "klima-" + currentStatus.device_id.toLowerCase();
                 const hasCustomName = currentStatus.device_name && currentStatus.device_name !== currentStatus.device_id;
 
                 // Update page title with custom name if set
@@ -125,20 +125,19 @@
                 // Update temperature display
                 const tempElement = document.getElementById('currentTemp');
                 if (tempElement && currentStatus.temperature !== undefined) {
-                    tempElement.textContent = `${currentStatus.temperature.toFixed(1)}°C`;
+                    tempElement.textContent = `${currentStatus.temperature.toFixed(1)} °C`;
                 }
                 
                 // Update humidity display
                 const humidityElement = document.getElementById('currentHumidity');
-                if (humidityElement && currentStatus.humidity !== undefined) {
-                    humidityElement.textContent = `${currentStatus.humidity.toFixed(1)}%`;
+                if (humidityElement && currentStatus.relativeHumidity !== undefined) {
+                    humidityElement.textContent = `${currentStatus.relativeHumidity.toFixed(1)} %`;
                 }
 
                 // Update dew point display from measurements array
                 const dewPointElement = document.getElementById('currentDewPoint');
-                if (dewPointElement && currentStatus.measurements) {
-                    const dp = currentStatus.measurements.find(m => m.type === 'dew_point');
-                    dewPointElement.textContent = dp ? `${dp.value.toFixed(1)}°C` : '-';
+                if (dewPointElement && currentStatus.dewPoint !== undefined) {
+                    dewPointElement.textContent = `${currentStatus.dewPoint.toFixed(1)} °C`;
                 }
                 
                 // Update target temperature display
