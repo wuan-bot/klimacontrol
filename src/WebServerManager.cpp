@@ -290,68 +290,6 @@ void WebServerManager::setupAPIRoutes() {
         request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
     });
 
-    // POST /api/show - Change current show
-
-
-
-
-    // POST /api/layout - Change strip layout configuration
-    server.on(API_PATH_LAYOUT, HTTP_POST,
-              []([[maybe_unused]] AsyncWebServerRequest *request) {
-              },
-              nullptr,
-              [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index,
-                     [[maybe_unused]] size_t total) {
-                  if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
-                      DeserializationError error = deserializeJson(doc, data, len);
-
-                      if (error) {
-                          request->send(400, CONTENT_TYPE_JSON, JSON_RESPONSE_ERROR_INVALID_JSON);
-                          return;
-                      }
-
-                      Config::LayoutConfig layoutConfig = config.loadLayoutConfig();
-
-                      // Update fields if provided
-                      if (doc.containsKey("reverse")) {
-                          layoutConfig.reverse = doc["reverse"];
-                      }
-                      if (doc.containsKey("mirror")) {
-                          layoutConfig.mirror = doc["mirror"];
-                      }
-                      if (doc.containsKey("dead_leds")) {
-                          layoutConfig.dead_leds = doc["dead_leds"];
-                      }
-
-                      // Layout changes don't apply to temperature controller
-                      request->send(404, CONTENT_TYPE_JSON, R"({"success":false,"error":"Layout control not available in temperature controller"})");
-                  }
-              }
-    );
-
-    // GET /api/layout - Get current layout configuration
-    server.on(API_PATH_LAYOUT, HTTP_GET, [this](AsyncWebServerRequest *request) {
-        Config::LayoutConfig layoutConfig = config.loadLayoutConfig();
-
-        StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
-        doc["reverse"] = layoutConfig.reverse;
-        doc["mirror"] = layoutConfig.mirror;
-        doc["dead_leds"] = layoutConfig.dead_leds;
-
-        String response;
-        serializeJson(doc, response);
-        request->send(200, CONTENT_TYPE_JSON, response);
-    });
-
-    // GET /api/presets - List all presets (REMOVED - obsolete)
-    // POST /api/presets/load - Load a preset by index or name (REMOVED - obsolete)
-
-    // POST /api/presets - Save current state as preset
-    // POST /api/presets - Save current state as preset (REMOVED - obsolete)
-
-    // DELETE /api/presets - Delete a preset by index or name (REMOVED - obsolete)
-
     // POST /api/restart - Restart the device
     server.on(API_PATH_RESTART, HTTP_POST, [](AsyncWebServerRequest *request) {
         request->send(200, CONTENT_TYPE_JSON, R"({"success":true,"message":"Restarting..."})");
@@ -661,12 +599,7 @@ void WebServerManager::setupAPIRoutes() {
                       }
 
                       // Optional: action (defaults to TURN_OFF)
-                      Config::TimerAction action = Config::TimerAction::TURN_OFF;
-                      if (doc.containsKey("action")) {
-                          int actionInt = doc["action"];
-                          if (actionInt == 0) action = Config::TimerAction::LOAD_PRESET;
-                          else action = Config::TimerAction::TURN_OFF;
-                      }
+                      Config::TimerAction action = Config::TimerAction::DISABLE_CONTROL;
 
                       // Optional: preset_index (only used if action is LOAD_PRESET)
                       uint8_t presetIndex = doc["preset_index"] | 0;
@@ -745,11 +678,11 @@ void WebServerManager::setupAPIRoutes() {
                       }
 
                       // Optional: action (defaults to TURN_OFF)
-                      Config::TimerAction action = Config::TimerAction::TURN_OFF;
+                      Config::TimerAction action = Config::TimerAction::DISABLE_CONTROL;
                       if (doc.containsKey("action")) {
                           int actionInt = doc["action"];
-                          if (actionInt == 0) action = Config::TimerAction::LOAD_PRESET;
-                          else action = Config::TimerAction::TURN_OFF;
+                          if (actionInt == 0) action = Config::TimerAction::UPDATE_SETPOINT;
+                          else action = Config::TimerAction::DISABLE_CONTROL;
                       }
 
                       uint8_t presetIndex = doc["preset_index"] | 0;

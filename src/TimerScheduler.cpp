@@ -106,29 +106,19 @@ void TimerScheduler::executeTimer(uint8_t index) {
                   index, static_cast<int>(timer.action));
 
     switch (timer.action) {
-        case Config::TimerAction::TURN_OFF:
+        case Config::TimerAction::ENABLE_CONTROL:
+            // For temperature controller, "turn on" means enable temperature control
+            sensorController.setControlEnabled(true);
+            Serial.println("TimerScheduler: Temperature control enabled");
+            break;
+
+        case Config::TimerAction::DISABLE_CONTROL:
             // For temperature controller, "turn off" means disable temperature control
             sensorController.setControlEnabled(false);
             Serial.println("TimerScheduler: Temperature control disabled");
             break;
 
-        case Config::TimerAction::LOAD_PRESET:
-            // For temperature controller, presets could set specific target temperatures
-            // This is a placeholder - in a full implementation, we'd load temperature presets
-            {
-                Config::PresetsConfig presetsConfig = config.loadPresetsConfig();
-                if (timer.preset_index < Config::PresetsConfig::MAX_PRESETS &&
-                    presetsConfig.presets[timer.preset_index].valid) {
-                    // In a temperature controller, presets could contain target temperatures
-                    // For now, just enable control as a placeholder
-                    sensorController.setControlEnabled(true);
-                    Serial.printf("TimerScheduler: Activated temperature preset %d (%s)\n",
-                                  timer.preset_index, presetsConfig.presets[timer.preset_index].name);
-                } else {
-                    Serial.printf("TimerScheduler: Preset %d is invalid, cancelling timer\n",
-                                  timer.preset_index);
-                }
-            }
+        case Config::TimerAction::UPDATE_SETPOINT:
             break;
     }
 #endif

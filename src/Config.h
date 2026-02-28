@@ -35,19 +35,6 @@ namespace Config {
     };
 
     /**
-     * LED show configuration structure
-     */
-    struct ShowConfig {
-        char current_show[32]; // e.g., "Rainbow", "Mandelbrot"
-        char params_json[256]; // JSON string for show parameters
-
-        ShowConfig() {
-            strcpy(current_show, "Rainbow");
-            strcpy(params_json, "{}");
-        }
-    };
-
-    /**
      * Device configuration structure
      */
     struct DeviceConfig {
@@ -70,51 +57,12 @@ namespace Config {
     };
 
     /**
-     * LED strip layout configuration structure
-     */
-    struct LayoutConfig {
-        bool reverse; // Reverse LED order
-        bool mirror; // Mirror LED pattern
-        int16_t dead_leds; // Number of dead LEDs at the end
-
-        LayoutConfig() : reverse(false), mirror(false), dead_leds(0) {
-        }
-    };
-
-    /**
-     * Show preset structure
-     */
-    struct Preset {
-        char name[32];
-        char show_name[32];
-        char params_json[256];
-        bool layout_reverse;
-        bool layout_mirror;
-        int16_t layout_dead_leds;
-        bool valid;
-
-        Preset() : layout_reverse(false), layout_mirror(false),
-                   layout_dead_leds(0), valid(false) {
-            name[0] = '\0';
-            show_name[0] = '\0';
-            strcpy(params_json, "{}");
-        }
-    };
-
-    /**
-     * Presets configuration structure
-     */
-    struct PresetsConfig {
-        static constexpr uint8_t MAX_PRESETS = 8;
-        Preset presets[MAX_PRESETS];
-    };
-
-    /**
      * Timer action types
      */
     enum class TimerAction : uint8_t {
-        LOAD_PRESET = 0,  // Load a preset by index
-        TURN_OFF = 1      // Turn off LEDs (Solid show with black color)
+        ENABLE_CONTROL = 0,
+        DISABLE_CONTROL = 1,
+        UPDATE_SETPOINT = 2
     };
 
     /**
@@ -131,7 +79,7 @@ namespace Config {
     struct TimerEntry {
         bool enabled = false;
         TimerType type = TimerType::COUNTDOWN;
-        TimerAction action = TimerAction::TURN_OFF;
+        TimerAction action = TimerAction::ENABLE_CONTROL;
         uint8_t preset_index = 0;
         uint32_t target_time = 0;      // epoch for COUNTDOWN, seconds-since-midnight for ALARM_DAILY
         uint32_t duration_seconds = 0; // original duration for countdown display
@@ -259,18 +207,6 @@ namespace Config {
         void saveWiFiConfig(const WiFiConfig &config);
 
         /**
-         * Load show configuration from NVS
-         * @return ShowConfig structure with defaults if not found
-         */
-        ShowConfig loadShowConfig();
-
-        /**
-         * Save show configuration to NVS
-         * @param config Show configuration to save
-         */
-        void saveShowConfig(const ShowConfig &config);
-
-        /**
          * Load device configuration from NVS
          * @return DeviceConfig structure with defaults if not found
          */
@@ -309,52 +245,6 @@ namespace Config {
          * @return Number of consecutive failures
          */
         uint8_t getConnectionFailures();
-
-        /**
-         * Load layout configuration from NVS
-         * @return LayoutConfig structure with defaults if not found
-         */
-        LayoutConfig loadLayoutConfig();
-
-        /**
-         * Save layout configuration to NVS
-         * @param config Layout configuration to save
-         */
-        void saveLayoutConfig(const LayoutConfig &config);
-
-        /**
-         * Load all presets configuration from NVS
-         * @return PresetsConfig structure
-         */
-        PresetsConfig loadPresetsConfig();
-
-        /**
-         * Save a preset to NVS
-         * @param index Preset slot index (0-7)
-         * @param preset Preset to save
-         * @return true if saved successfully
-         */
-        bool savePreset(uint8_t index, const Preset &preset);
-
-        /**
-         * Delete a preset from NVS
-         * @param index Preset slot index (0-7)
-         * @return true if deleted successfully
-         */
-        bool deletePreset(uint8_t index);
-
-        /**
-         * Find a preset by name
-         * @param name Preset name to search for
-         * @return Preset index (0-7) or -1 if not found
-         */
-        int findPresetByName(const char *name);
-
-        /**
-         * Get next available preset slot
-         * @return Preset index (0-7) or -1 if all slots full
-         */
-        int getNextPresetSlot();
 
         /**
          * Load timers configuration from NVS
