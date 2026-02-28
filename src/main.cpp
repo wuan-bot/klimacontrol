@@ -94,6 +94,6 @@ void setup() {
 void loop() {
 #ifdef ARDUINO
     config.checkRestart();
-    vTaskDelay(250 / portTICK_PERIOD_MS);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
 #endif
 }

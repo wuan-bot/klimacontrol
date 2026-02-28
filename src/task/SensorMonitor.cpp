@@ -34,39 +34,14 @@ namespace Task {
     }
     
     void SensorMonitor::task() {
-#ifdef DEBUG
-        unsigned long lastStatsTime = millis();
-#endif
-        unsigned long lastControlUpdate = millis();
-        
         while (true) {
-            unsigned long currentTime = millis();
-            
-            // Read sensors at the configured interval
-            if (currentTime - lastReadingTime >= readingInterval) {
-                controller.readSensors();
-                lastReadingTime = currentTime;
-            }
-            
-            // Update temperature control every second
-            if (currentTime - lastControlUpdate >= 1000) {
-                if (controller.isControlEnabled()) {
-                    float controlOutput = controller.updateControl();
-                    // TODO: Apply control output to actuator (relay, etc.)
-                }
-                lastControlUpdate = currentTime;
+            controller.readSensors();
+
+            if (controller.isControlEnabled()) {
+                controller.updateControl();
             }
 
-#ifdef DEBUG
-            if (currentTime - lastStatsTime >= 60000) {
-                Serial.printf("SensorMonitor: Running for %lu ms, interval=%lu ms\n",
-                             currentTime, readingInterval);
-                lastStatsTime = currentTime;
-            }
-#endif
-            
-            // Small delay to prevent task from hogging CPU
-            vTaskDelay(500 / portTICK_PERIOD_MS);
+            vTaskDelay(readingInterval / portTICK_PERIOD_MS);
         }
     }
 #endif

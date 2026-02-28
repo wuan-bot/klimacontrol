@@ -116,8 +116,8 @@ void Network::startSTA(const char *ssid, const char *password) {
     // Set WiFi mode explicitly
     WiFi.mode(WIFI_STA);
 
-    // Enable WiFi power save (radio sleeps between DTIM beacons)
-    WiFi.setSleep(WIFI_PS_MIN_MODEM);
+    // Enable WiFi power save (radio sleeps between DTIM beacons, longer sleep intervals)
+    WiFi.setSleep(WIFI_PS_MAX_MODEM);
 
     // Reduce transmit power (8.5 dBm is sufficient for indoor range)
     WiFi.setTxPower(WIFI_POWER_8_5dBm);
@@ -132,7 +132,7 @@ void Network::startSTA(const char *ssid, const char *password) {
     esp_err_t pm_err = esp_pm_configure(&pm_config);
 
     Serial.println("WiFi Configuration:");
-    Serial.printf("  Power save: MIN_MODEM\n");
+    Serial.printf("  Power save: MAX_MODEM\n");
     Serial.printf("  TX Power: 8.5dBm\n");
     Serial.printf("  PM: %s (CPU 10-80 MHz, light sleep)\n",
         pm_err == ESP_OK ? "enabled" : (pm_err == ESP_ERR_NOT_SUPPORTED ? "not supported (needs CONFIG_PM_ENABLE)" : "failed"));
@@ -381,7 +381,7 @@ void Network::configureUsingAPMode() {
                 }
             }
 
-            if (ntpClient.getEpochTime() - lastNtpUpdate > 600) {
+            if (ntpClient.getEpochTime() - lastNtpUpdate > 3600) {
                 bool result = ntpClient.update();
                 Serial.print("NTP update: ");
                 Serial.print(ntpClient.getFormattedTime());
