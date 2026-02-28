@@ -189,6 +189,105 @@ void WebServerManager::setupAPIRoutes() {
         request->send(200, CONTENT_TYPE_JSON, response);
     });
 
+    // GET /api/sensors/config - Get sensor configuration as devices array
+    // NOTE: Must be registered before /api/sensors to avoid prefix matching
+    server.on("/api/sensors/config", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        Config::SensorConfig sensorConfig = config.loadSensorConfig();
+
+        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+        JsonArray arr = doc.createNestedArray("devices");
+
+        // Parse assignment string "44=SHT4x,77=BME680" into JSON array
+        char buf[128];
+        strncpy(buf, sensorConfig.assignments, sizeof(buf));
+        buf[sizeof(buf) - 1] = '\0';
+
+        char* token = strtok(buf, ",");
+        while (token) {
+            char* eq = strchr(token, '=');
+            if (eq) {
+                *eq = '\0';
+                uint8_t addr = (uint8_t)strtoul(token, nullptr, 10);
+                const char* name = eq + 1;
+
+                JsonObject obj = arr.createNestedObject();
+                obj["address"] = addr;
+                obj["type"] = name;
+            }
+            token = strtok(nullptr, ",");
+        }
+
+        String response;
+        serializeJson(doc, response);
+        request->send(200, CONTENT_TYPE_JSON, response);
+    });
+
+    // GET /api/sensors/registry - Get known sensor types and their I2C addresses
+    // NOTE: Must be registered before /api/sensors to avoid prefix matching
+    server.on("/api/sensors/registry", HTTP_GET, [](AsyncWebServerRequest *request) {
+        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+        JsonArray arr = doc.createNestedArray("sensors");
+
+        size_t registryCount;
+        const SensorInfo* registry = I2CScanner::getRegistry(registryCount);
+        for (size_t i = 0; i < registryCount; i++) {
+            JsonObject obj = arr.createNestedObject();
+            obj["type"] = registry[i].name;
+            JsonArray addrs = obj.createNestedArray("addresses");
+            for (uint8_t j = 0; j < registry[i].addressCount; j++) {
+                addrs.add(registry[i].addresses[j]);
+            }
+        }
+
+        String response;
+        serializeJson(doc, response);
+        request->send(200, CONTENT_TYPE_JSON, response);
+    });
+
+    // POST /api/sensors/config - Save sensor configuration (triggers restart)
+    // Accepts: {"devices": [{"address": 68, "type": "SHT4x"}, ...]}
+    // NOTE: Must be registered before /api/sensors to avoid prefix matching
+    server.on("/api/sensors/config", HTTP_POST,
+              []([[maybe_unused]] AsyncWebServerRequest *request) {
+              },
+              nullptr,
+              [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
+                  if (index == 0) {
+                      StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+                      DeserializationError error = deserializeJson(doc, data, len);
+
+                      if (error) {
+                          request->send(400, CONTENT_TYPE_JSON, JSON_RESPONSE_ERROR_INVALID_JSON);
+                          return;
+                      }
+
+                      Config::SensorConfig sensorConfig;
+                      char* p = sensorConfig.assignments;
+                      size_t remaining = sizeof(sensorConfig.assignments);
+
+                      JsonArray devices = doc["devices"];
+                      for (size_t i = 0; i < devices.size(); i++) {
+                          uint8_t addr = devices[i]["address"];
+                          const char* type = devices[i]["type"];
+                          if (!type) continue;
+
+                          int written = snprintf(p, remaining, "%s%u=%s",
+                                                 (p != sensorConfig.assignments) ? "," : "",
+                                                 addr, type);
+                          if (written > 0 && (size_t)written < remaining) {
+                              p += written;
+                              remaining -= written;
+                          }
+                      }
+
+                      config.saveSensorConfig(sensorConfig);
+                      config.requestRestart(1000);
+
+                      request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
+                  }
+              }
+    );
+
     // GET /api/sensors - Get sensor information
     server.on("/api/sensors", HTTP_GET, [this](AsyncWebServerRequest *request) {
         StaticJsonDocument<Config::JSON_DOC_LARGE> doc;
@@ -1014,81 +1113,6 @@ void WebServerManager::setupAPIRoutes() {
         serializeJson(doc, response);
         request->send(200, CONTENT_TYPE_JSON, response);
     });
-
-    // GET /api/sensors/config - Get sensor configuration as devices array
-    server.on("/api/sensors/config", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        Config::SensorConfig sensorConfig = config.loadSensorConfig();
-
-        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
-        JsonArray arr = doc.createNestedArray("devices");
-
-        // Parse assignment string "44=SHT4x,77=BME680" into JSON array
-        char buf[128];
-        strncpy(buf, sensorConfig.assignments, sizeof(buf));
-        buf[sizeof(buf) - 1] = '\0';
-
-        char* token = strtok(buf, ",");
-        while (token) {
-            char* eq = strchr(token, '=');
-            if (eq) {
-                *eq = '\0';
-                uint8_t addr = (uint8_t)strtoul(token, nullptr, 10);
-                const char* name = eq + 1;
-
-                JsonObject obj = arr.createNestedObject();
-                obj["address"] = addr;
-                obj["type"] = name;
-            }
-            token = strtok(nullptr, ",");
-        }
-
-        String response;
-        serializeJson(doc, response);
-        request->send(200, CONTENT_TYPE_JSON, response);
-    });
-
-    // POST /api/sensors/config - Save sensor configuration (triggers restart)
-    // Accepts: {"devices": [{"address": 68, "type": "SHT4x"}, ...]}
-    server.on("/api/sensors/config", HTTP_POST,
-              []([[maybe_unused]] AsyncWebServerRequest *request) {
-              },
-              nullptr,
-              [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
-                  if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
-                      DeserializationError error = deserializeJson(doc, data, len);
-
-                      if (error) {
-                          request->send(400, CONTENT_TYPE_JSON, JSON_RESPONSE_ERROR_INVALID_JSON);
-                          return;
-                      }
-
-                      Config::SensorConfig sensorConfig;
-                      char* p = sensorConfig.assignments;
-                      size_t remaining = sizeof(sensorConfig.assignments);
-
-                      JsonArray devices = doc["devices"];
-                      for (size_t i = 0; i < devices.size(); i++) {
-                          uint8_t addr = devices[i]["address"];
-                          const char* type = devices[i]["type"];
-                          if (!type) continue;
-
-                          int written = snprintf(p, remaining, "%s%u=%s",
-                                                 (p != sensorConfig.assignments) ? "," : "",
-                                                 addr, type);
-                          if (written > 0 && (size_t)written < remaining) {
-                              p += written;
-                              remaining -= written;
-                          }
-                      }
-
-                      config.saveSensorConfig(sensorConfig);
-                      config.requestRestart(1000);
-
-                      request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
-                  }
-              }
-    );
 
     // GET /api/mqtt - Get MQTT configuration
     server.on("/api/mqtt", HTTP_GET, [this](AsyncWebServerRequest *request) {

@@ -37,25 +37,20 @@
             <h2>I2C Sensors</h2>
             <p>Configure which sensors are connected to the I2C bus (STEMMA QT connector). Changes require a restart.</p>
 
-            <div id="currentAssignments" style="margin-bottom: 15px;">
+            <div id="sensorListContainer" style="margin-bottom: 15px;">
                 <div class="info-box">
-                    <strong>Current Sensors:</strong>
-                    <div id="currentSensorList" style="margin-top: 5px;">Loading...</div>
+                    <strong>Configured Sensors:</strong>
+                    <div id="sensorList" style="margin-top: 5px;">Loading...</div>
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="scanI2C()" id="scanBtn">Scan I2C Bus</button>
-            <div id="scanResults" style="display: none; margin-top: 10px;">
-                <div class="info-box">
-                    <strong>Discovered Devices:</strong>
-                    <div id="scanDeviceList" style="margin-top: 5px;"></div>
-                </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="scanI2C()" id="scanBtn">Scan I2C Bus</button>
+                <button class="btn btn-primary" onclick="saveSensorConfig()" id="saveSensorBtn" style="display:none;">Save Sensor Settings</button>
+            </div>
 
-                <button class="btn btn-primary" onclick="saveSensorConfig()" style="margin-top: 10px;">Save Sensor Settings</button>
-
-                <div class="warning-box">
-                    <strong>Note:</strong> The device will restart after saving sensor settings to apply changes.
-                </div>
+            <div class="warning-box" id="sensorRestartNote" style="display:none; margin-top: 10px;">
+                <strong>Note:</strong> The device will restart after saving sensor settings to apply changes.
             </div>
         </div>
 
@@ -544,32 +539,101 @@
     }
 
     // I2C Sensor Functions
-    let currentAssignments = {}; // address -> type
+    let knownTypes = []; // [{type, addresses}]
+
+    function addrHex(addr) {
+        return '0x' + addr.toString(16).toUpperCase().padStart(2, '0');
+    }
+
+    function typesForAddress(addr) {
+        const types = [];
+        knownTypes.forEach(kt => {
+            if (kt.addresses.includes(addr)) types.push(kt.type);
+        });
+        return types;
+    }
+
+    function createSensorRow(addr, selectedType) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:8px; margin:6px 0;';
+        row.dataset.address = addr;
+
+        const label = document.createElement('span');
+        label.textContent = addrHex(addr);
+        label.style.fontFamily = 'monospace';
+        row.appendChild(label);
+
+        const types = typesForAddress(addr);
+        const select = document.createElement('select');
+        select.dataset.address = addr;
+        select.style.padding = '6px 8px';
+
+        const disOpt = document.createElement('option');
+        disOpt.value = 'DISABLED';
+        disOpt.textContent = 'Disabled';
+        select.appendChild(disOpt);
+
+        types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            select.appendChild(opt);
+        });
+
+        // If the selected type isn't in the known types for this address, add it
+        if (selectedType && !types.includes(selectedType)) {
+            const opt = document.createElement('option');
+            opt.value = selectedType;
+            opt.textContent = selectedType;
+            select.appendChild(opt);
+        }
+
+        if (selectedType) select.value = selectedType;
+
+        row.appendChild(select);
+
+        return row;
+    }
+
+    function showSensorButtons() {
+        document.getElementById('saveSensorBtn').style.display = '';
+        document.getElementById('sensorRestartNote').style.display = '';
+    }
+
+    function renderSensorList(devices) {
+        const list = document.getElementById('sensorList');
+        list.innerHTML = '';
+        if (devices.length === 0) {
+            list.textContent = 'No sensors configured.';
+        } else {
+            devices.forEach(d => {
+                list.appendChild(createSensorRow(d.address, d.type));
+            });
+        }
+        showSensorButtons();
+    }
 
     async function loadSensorConfig() {
         try {
-            const response = await fetch('/api/sensors/config');
-            const data = await response.json();
+            const [configRes, registryRes] = await Promise.all([
+                fetch('/api/sensors/config'),
+                fetch('/api/sensors/registry')
+            ]);
+            const configData = await configRes.json();
+            const registryData = await registryRes.json();
 
-            currentAssignments = {};
-            const list = document.getElementById('currentSensorList');
-            if (data.devices && data.devices.length > 0) {
-                data.devices.forEach(d => { currentAssignments[d.address] = d.type; });
-                list.innerHTML = data.devices.map(d =>
-                    `0x${d.address.toString(16).toUpperCase().padStart(2,'0')} &mdash; ${d.type}`
-                ).join('<br>');
-            } else {
-                list.textContent = 'No sensors configured.';
-            }
+            if (registryData.sensors) knownTypes = registryData.sensors;
+
+            const devices = configData.devices || [];
+            renderSensorList(devices);
         } catch (error) {
             console.error('Failed to load sensor config:', error);
-            document.getElementById('currentSensorList').textContent = 'Error loading';
+            document.getElementById('sensorList').textContent = 'Error loading';
         }
     }
 
     async function saveSensorConfig() {
-        // Collect all non-disabled selections from scan dropdowns
-        const selects = document.querySelectorAll('#scanDeviceList select');
+        const selects = document.querySelectorAll('#sensorList select');
         const devices = [];
         selects.forEach(sel => {
             if (sel.value !== 'DISABLED') {
@@ -609,59 +673,30 @@
             const response = await fetch('/api/i2c/scan');
             const data = await response.json();
 
-            const list = document.getElementById('scanDeviceList');
             if (data.devices.length === 0) {
-                list.textContent = 'No devices found.';
+                alert('No I2C devices found on the bus.');
             } else {
-                list.innerHTML = '';
+                const list = document.getElementById('sensorList');
+                const existing = new Set(
+                    Array.from(list.querySelectorAll('select')).map(s => parseInt(s.dataset.address))
+                );
+
+                // If the list only has text content, clear it first
+                if (list.childElementCount === 0) list.textContent = '';
+
+                let added = 0;
                 data.devices.forEach(d => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display:flex; align-items:center; gap:8px; margin:6px 0;';
-
-                    const label = document.createElement('span');
-                    label.textContent = d.address_hex;
-                    label.style.fontFamily = 'monospace';
-                    row.appendChild(label);
-
-                    if (d.types && d.types.length > 0) {
-                        const select = document.createElement('select');
-                        select.dataset.address = d.address;
-                        select.style.padding = '6px 8px';
-
-                        // Add Disabled option
-                        const disOpt = document.createElement('option');
-                        disOpt.value = 'DISABLED';
-                        disOpt.textContent = 'Disabled';
-                        select.appendChild(disOpt);
-
-                        d.types.forEach(t => {
-                            const opt = document.createElement('option');
-                            opt.value = t;
-                            opt.textContent = t;
-                            // Pre-select if currently assigned
-                            if (currentAssignments[d.address] === t) {
-                                opt.selected = true;
-                            }
-                            select.appendChild(opt);
-                        });
-
-                        // If address has a current assignment, make sure it's selected
-                        if (currentAssignments[d.address]) {
-                            select.value = currentAssignments[d.address];
-                        }
-
-                        row.appendChild(select);
-                    } else {
-                        const unknown = document.createElement('span');
-                        unknown.textContent = 'Unknown device';
-                        unknown.style.color = '#666';
-                        row.appendChild(unknown);
+                    if (!existing.has(d.address) && d.types && d.types.length > 0) {
+                        list.appendChild(createSensorRow(d.address, d.types[0]));
+                        added++;
                     }
-
-                    list.appendChild(row);
                 });
+
+                showSensorButtons();
+                if (added === 0) {
+                    alert('No new devices found. All discovered devices are already in the list.');
+                }
             }
-            document.getElementById('scanResults').style.display = 'block';
         } catch (error) {
             console.error('Failed to scan I2C:', error);
             alert('Error scanning I2C bus');
