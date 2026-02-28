@@ -34,7 +34,9 @@ namespace Task {
     }
     
     void SensorMonitor::task() {
+#ifdef DEBUG
         unsigned long lastStatsTime = millis();
+#endif
         unsigned long lastControlUpdate = millis();
         
         while (true) {
@@ -54,13 +56,14 @@ namespace Task {
                 }
                 lastControlUpdate = currentTime;
             }
-            
-            // Log statistics every 60 seconds
+
+#ifdef DEBUG
             if (currentTime - lastStatsTime >= 60000) {
                 Serial.printf("SensorMonitor: Running for %lu ms, interval=%lu ms\n",
                              currentTime, readingInterval);
                 lastStatsTime = currentTime;
             }
+#endif
             
             // Small delay to prevent task from hogging CPU
             vTaskDelay(500 / portTICK_PERIOD_MS);
