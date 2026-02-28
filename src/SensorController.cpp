@@ -1,7 +1,6 @@
 #include "SensorController.h"
 #include <algorithm>
 #include <cmath>
-#include "SensorDataLogger.h"
 #include "StatusLed.h"
 #include "Network.h"
 
@@ -20,10 +19,7 @@ namespace {
 
 SensorController::SensorController(Config::ConfigManager &config)
     : config(config), network(nullptr), lastReadingTimestamp(0), dataValid(false),
-      targetTemperature(22.0f), controlEnabled(false), lastReadingTime(0),
-      logInterval(60000), lastLogTime(0) {
-    // Initialize data logger with capacity for 1000 entries
-    dataLogger = std::make_unique<SensorDataLogger>(1000);
+      targetTemperature(22.0f), controlEnabled(false), lastReadingTime(0) {
 }
 
 void SensorController::setNetwork(Network *network) {
@@ -109,13 +105,6 @@ void SensorController::readSensors() {
         lastReadingTimestamp = timestamp;
         dataValid = true;
         lastReadingTime = timestamp;
-
-        // Log the data if logging is enabled
-        uint32_t now = millis();
-        if (now - lastLogTime >= logInterval) {
-            dataLogger->addReading(currentMeasurements, timestamp);
-            lastLogTime = now;
-        }
     } else {
         dataValid = false;
     }

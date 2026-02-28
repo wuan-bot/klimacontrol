@@ -4,7 +4,6 @@
 #include <Wire.h>
 #endif
 
-#include "SensorDataLogger.h"
 #include "Network.h"
 #include "Config.h"
 #include "WebServerManager.h"

@@ -6,7 +6,6 @@
 #include "Config.h"
 #include "Network.h"
 #include "SensorController.h"
-#include "SensorDataLogger.h"
 #include "DeviceId.h"
 #include "OTAUpdater.h"
 #include "Constants.h"
@@ -305,90 +304,6 @@ void WebServerManager::setupAPIRoutes() {
         request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
     });
 
-    // GET /api/log - Get logged sensor data
-    server.on("/api/log", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        auto *logger = sensorController.getDataLogger();
-        if (!logger) {
-            request->send(500, CONTENT_TYPE_JSON, R"({"success":false,"error":"Data logger not available"})");
-            return;
-        }
-        
-        // Get query parameters
-        int count = 100; // Default: 100 most recent entries
-        if (request->hasParam("count")) {
-            count = request->getParam("count")->value().toInt();
-            count = std::max(1, std::min(count, 1000)); // Limit to 1-1000
-        }
-        
-        auto entries = logger->getRecentEntries(count);
-        
-        StaticJsonDocument<Config::JSON_DOC_XLARGE> doc;
-        JsonArray dataArray = doc.createNestedArray("data");
-        
-        for (const auto &entry : entries) {
-            JsonObject dataObj = dataArray.createNestedObject();
-            dataObj["timestamp"] = entry.logTime;
-            dataObj["time"] = entry.timestamp;
-
-            // Backward-compatible top-level fields
-            for (const auto &m : entry.measurements) {
-                if (strcmp(m.type, "temperature") == 0) dataObj["temperature"] = std::get<float>(m.value);
-                else if (strcmp(m.type, "humidity") == 0) dataObj["humidity"] = std::get<float>(m.value);
-            }
-
-            // Generic measurements array
-            JsonArray measurements = dataObj.createNestedArray("measurements");
-            for (const auto &m : entry.measurements) {
-                JsonObject mObj = measurements.createNestedObject();
-                mObj["type"] = m.type;
-                if (auto* i = std::get_if<int32_t>(&m.value)) {
-                    mObj["value"] = *i;
-                } else {
-                    mObj["value"] = std::get<float>(m.value);
-                }
-                mObj["unit"] = m.unit;
-                mObj["sensor"] = m.sensor;
-                mObj["calculated"] = m.calculated;
-            }
-        }
-        
-        doc["total_entries"] = logger->getEntryCount();
-        doc["max_capacity"] = logger->getMaxCapacity();
-        doc["has_wrapped"] = logger->hasWrapped();
-        doc["returned_count"] = entries.size();
-        
-        String response;
-        serializeJson(doc, response);
-        request->send(200, CONTENT_TYPE_JSON, response);
-    });
-
-    // GET /api/log/csv - Export logged data as CSV
-    server.on("/api/log/csv", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        auto *logger = sensorController.getDataLogger();
-        if (!logger) {
-            request->send(500, "text/plain", "Data logger not available");
-            return;
-        }
-        
-        String csv = logger->exportAsCSV();
-        AsyncWebServerResponse *response = request->beginResponse(200, "text/csv", csv);
-        response->addHeader("Content-Disposition", "attachment; filename=sensor_data.csv");
-        request->send(response);
-    });
-
-    // POST /api/log/clear - Clear logged data
-    server.on("/api/log/clear", HTTP_POST, [this](AsyncWebServerRequest *request) {
-        auto *logger = sensorController.getDataLogger();
-        if (logger) {
-            logger->clear();
-            request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
-        } else {
-            request->send(500, CONTENT_TYPE_JSON, R"({"success":false,"error":"Data logger not available"})");
-        }
-    });
-
-
-
     // POST /api/show - Change current show
 
 
@@ -658,7 +573,6 @@ void WebServerManager::setupAPIRoutes() {
         statsJson["sensor_count"] = sensorController.getSensorCount();
         statsJson["has_connected_sensors"] = sensorController.hasConnectedSensors();
         statsJson["time_since_last_reading"] = sensorController.getTimeSinceLastReading();
-        statsJson["log_entries"] = sensorController.getDataLogger() ? sensorController.getDataLogger()->getEntryCount() : 0;
 
         // Chip info
         doc["chip_model"] = ESP.getChipModel();
@@ -1178,7 +1092,7 @@ void WebServerManager::setupAPIRoutes() {
 
         // Memory info
         uint32_t freeHeap, minFreeHeap, psramFree;
-        OTAUpdater::getMemoryInfo(freeHeap, minFreeHeap, psramFree);
+        OTAUpdater::getMemoryInfo(freeHeap, minFreeHeap);
         doc["free_heap"] = freeHeap;
         doc["min_free_heap"] = minFreeHeap;
         doc["psram_free"] = psramFree;

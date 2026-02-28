@@ -25,8 +25,12 @@
                     <div class="status-value" id="currentTemp">-</div>
                 </div>
                 <div class="status-item">
-                    <div class="status-label">Humidity</div>
+                    <div class="status-label">Rel. Humidity</div>
                     <div class="status-value" id="currentHumidity">-</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Dew Point</div>
+                    <div class="status-value" id="currentDewPoint">-</div>
                 </div>
                 <div class="status-item">
                     <div class="status-label">Target</div>
@@ -128,6 +132,13 @@
                 const humidityElement = document.getElementById('currentHumidity');
                 if (humidityElement && currentStatus.humidity !== undefined) {
                     humidityElement.textContent = `${currentStatus.humidity.toFixed(1)}%`;
+                }
+
+                // Update dew point display from measurements array
+                const dewPointElement = document.getElementById('currentDewPoint');
+                if (dewPointElement && currentStatus.measurements) {
+                    const dp = currentStatus.measurements.find(m => m.type === 'dew_point');
+                    dewPointElement.textContent = dp ? `${dp.value.toFixed(1)}°C` : '-';
                 }
                 
                 // Update target temperature display

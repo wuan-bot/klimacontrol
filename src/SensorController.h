@@ -6,7 +6,6 @@
 #include "sensor/Sensor.h"
 #include "Config.h"
 
-class SensorDataLogger;
 class Network;
 
 namespace Sensor {
@@ -29,11 +28,6 @@ private:
     float targetTemperature;
     bool controlEnabled;
     uint32_t lastReadingTime;
-
-    // Data logging
-    std::unique_ptr<SensorDataLogger> dataLogger;
-    uint32_t lastLogTime;
-    uint32_t logInterval;
 
 public:
     explicit SensorController(Config::ConfigManager &config);
@@ -91,9 +85,6 @@ public:
     void setStatusLedMeasuring();
     void setStatusLedNormal();
 
-    SensorDataLogger* getDataLogger() const { return dataLogger.get(); }
-    void setLogInterval(uint32_t intervalMs) { logInterval = intervalMs; }
-    uint32_t getLogInterval() const { return logInterval; }
 };
 
 #endif // SENSOR_CONTROLLER_H

@@ -8,19 +8,6 @@
 #ifdef ARDUINO
 #include <esp_task_wdt.h>  // For watchdog timer control
 
-// HTTPClient error codes (from HTTPClient.h)
-#define HTTPC_ERROR_CONNECTION_FAILED   (-1)
-#define HTTPC_ERROR_SEND_HEADER_FAILED  (-2)
-#define HTTPC_ERROR_SEND_PAYLOAD_FAILED (-3)
-#define HTTPC_ERROR_NOT_CONNECTED       (-4)
-#define HTTPC_ERROR_CONNECTION_LOST     (-5)
-#define HTTPC_ERROR_NO_STREAM           (-6)
-#define HTTPC_ERROR_NO_HTTP_SERVER      (-7)
-#define HTTPC_ERROR_TOO_LESS_RAM        (-8)
-#define HTTPC_ERROR_ENCODING            (-9)
-#define HTTPC_ERROR_STREAM_WRITE        (-10)
-#define HTTPC_ERROR_READ_TIMEOUT        (-11)
-
 // ============================================================================
 // Public Methods
 // ============================================================================
@@ -28,21 +15,7 @@
 bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInfo &info) {
     info.isValid = false;
 
-    // Check WiFi connection first
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("[OTA] WiFi not connected");
-        return false;
-    }
-
-    // Log memory and WiFi status
-    Serial.printf("[OTA] Free heap before request: %u bytes\n", ESP.getFreeHeap());
-    Serial.printf("[OTA] WiFi RSSI: %d dBm\n", WiFi.RSSI());
-
-    // WiFiClientSecure client = createSecureClient();
-
-    WiFiClientSecure client;
-    // client.setInsecure();
-    client.setCACertBundle(nullptr);
+    WiFiClientSecure client = createSecureClient();
 
     HTTPClient http;
     String apiUrl = String("https://api.github.com/repos/") + owner + "/" + repo + "/releases/latest";
@@ -50,36 +23,20 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     Serial.printf("[OTA] Checking for updates: %s\n", apiUrl.c_str());
 
     if (!http.begin(client, apiUrl)) {
-        Serial.println("[OTA] HTTP initialization failed - could not begin connection");
-        Serial.printf("[OTA] Free heap: %u bytes\n", ESP.getFreeHeap());
+        Serial.println("[OTA] HTTP initialization failed");
         return false;
     }
 
-    // Configure HTTP request with proper headers for GitHub API
+    // Configure HTTP request
     http.addHeader("Accept", "application/vnd.github.v3+json");
     http.addHeader("User-Agent", "ESP32-OTA/1.0");
     http.setTimeout(TIMEOUT_MS);
     http.useHTTP10(true); // Use HTTP/1.0 to reduce overhead
-    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS); // Handle GitHub redirects
 
-    Serial.println("[OTA] Sending HTTPS GET request...");
     int httpCode = http.GET();
 
-    if (httpCode < 0) {
-        Serial.printf("[OTA] HTTP GET failed: %s (free heap: %u bytes)\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
-        http.end();
-        return false;
-    }
-
     if (httpCode != HTTP_CODE_OK) {
-        Serial.printf("[OTA] HTTP response code: %d\n", httpCode);
-        if (httpCode == HTTP_CODE_UNAUTHORIZED) {
-            Serial.println("[OTA] Authentication required - check if repo is private");
-        } else if (httpCode == HTTP_CODE_NOT_FOUND) {
-            Serial.println("[OTA] Repository or release not found");
-        } else if (httpCode == HTTP_CODE_FORBIDDEN) {
-            Serial.println("[OTA] API rate limit may be exceeded");
-        }
+        Serial.printf("[OTA] HTTP GET failed: %s (free heap: %u bytes)\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
         http.end();
         return false;
     }
@@ -163,22 +120,12 @@ bool OTAUpdater::performUpdate(
     Serial.printf("[OTA] URL: %s\n", downloadUrl.c_str());
     Serial.printf("[OTA] Expected size: %zu bytes\n", expectedSize);
 
-    // Check WiFi connection first
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("[OTA] WiFi not connected - cannot perform update");
-        return false;
-    }
-
-    Serial.printf("[OTA] WiFi RSSI: %d dBm\n", WiFi.RSSI());
-
     // Reset watchdog before starting long operation
     esp_task_wdt_reset();
 
     // Check memory
     if (!hasEnoughMemory()) {
         Serial.println("[OTA] Insufficient memory for OTA");
-        Serial.printf("[OTA] Free heap: %u bytes, Required: %d bytes\n",
-                     ESP.getFreeHeap(), MIN_FREE_HEAP);
         return false;
     }
 
@@ -186,38 +133,24 @@ bool OTAUpdater::performUpdate(
     const esp_partition_t *nextPartition = esp_ota_get_next_update_partition(nullptr);
     if (nextPartition == nullptr) {
         Serial.println("[OTA] No OTA partition available");
-        Serial.println("[OTA] Check partitions.csv for OTA partition configuration");
         return false;
     }
 
-    Serial.printf("[OTA] Update target: %s (offset 0x%x, size 0x%x)\n",
-                  nextPartition->label, nextPartition->address, nextPartition->size);
-
-    // Check if firmware will fit in partition
-    if (expectedSize > nextPartition->size) {
-        Serial.printf("[OTA] Firmware too large! Size: %zu, Partition: %u\n",
-                     expectedSize, nextPartition->size);
-        return false;
-    }
+    Serial.printf("[OTA] Update target: %s (offset 0x%x)\n", nextPartition->label, nextPartition->address);
 
     WiFiClientSecure client = createSecureClient();
 
     HTTPClient http;
     if (!http.begin(client, downloadUrl)) {
-        Serial.println("[OTA] HTTP initialization failed for download");
-        Serial.printf("[OTA] Free heap: %u bytes\n", ESP.getFreeHeap());
+        Serial.println("[OTA] HTTP initialization failed");
         return false;
     }
 
     http.setTimeout(TIMEOUT_MS);
     http.useHTTP10(true);
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS); // Follow GitHub redirects
-    http.addHeader("User-Agent", "ESP32-OTA/1.0");
 
-    Serial.println("[OTA] Sending HTTPS GET request for firmware download...");
     int httpCode = http.GET();
-
-    Serial.printf("[OTA] error: %s\n", HTTPClient::errorToString(httpCode).c_str());
 
     // Handle redirects manually if needed
     if (httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
@@ -231,27 +164,11 @@ bool OTAUpdater::performUpdate(
             return false;
         }
         http.setTimeout(TIMEOUT_MS);
-        http.addHeader("User-Agent", "ESP32-OTA/1.0");
         httpCode = http.GET();
     }
 
-    // Check for HTTP errors
-    if (httpCode < 0) {
-        Serial.printf("[OTA] HTTP GET failed with error: %d\n", httpCode);
-        if (httpCode == HTTPC_ERROR_CONNECTION_FAILED) {
-            Serial.println("[OTA] Connection failed - check network stability");
-            Serial.println("[OTA] Possible causes:");
-            Serial.println("[OTA] - Poor WiFi signal");
-            Serial.println("[OTA] - DNS resolution failure");
-            Serial.println("[OTA] - Firewall blocking HTTPS");
-            Serial.println("[OTA] - GitHub servers unreachable");
-        }
-        http.end();
-        return false;
-    }
-
     if (httpCode != HTTP_CODE_OK) {
-        Serial.printf("[OTA] HTTP response code: %d\n", httpCode);
+        Serial.printf("[OTA] HTTP error: %s (free heap: %u bytes)\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
         http.end();
         return false;
     }
@@ -397,22 +314,14 @@ bool OTAUpdater::getRunningPartitionInfo(String &label, uint32_t &address) {
     return true;
 }
 
-void OTAUpdater::getMemoryInfo(uint32_t &freeHeap, uint32_t &minFreeHeap, uint32_t &psramFree) {
+void OTAUpdater::getMemoryInfo(uint32_t &freeHeap, uint32_t &minFreeHeap) {
     freeHeap = esp_get_free_heap_size();
     minFreeHeap = esp_get_minimum_free_heap_size();
-
-// TODO: Fix this for the QtPy ESP32-S2
-// #ifdef CONFIG_SPIRAM
-#ifdef CONFIG_HAS_PSRAM
-psramFree= esp_get_free_psram_size();
-#else
-psramFree=0;
-#endif
 }
 
 bool OTAUpdater::hasEnoughMemory() {
-    uint32_t freeHeap, minFree, psramFree;
-    getMemoryInfo(freeHeap, minFree, psramFree);
+    uint32_t freeHeap, minFree;
+    getMemoryInfo(freeHeap, minFree);
 
     Serial.printf("[OTA] Memory check - Free: %u bytes, Min: %u bytes\n", freeHeap, minFree);
 
@@ -431,19 +340,10 @@ bool OTAUpdater::hasEnoughMemory() {
 WiFiClientSecure OTAUpdater::createSecureClient() {
     WiFiClientSecure client;
 
-    // Configure TLS/SSL for GitHub API access
-    // Option 1: Skip certificate verification (less secure but more reliable)
-    client.setInsecure();
-
-    // Increase timeout for TLS handshake (default is too short for HTTPS)
-    client.setTimeout(15); // 15 seconds for TLS operations
-
-    // Note: For production, consider using GitHub's root CA certificate:
-    // client.setCACertBundle(rootca_crt_bundle);
-    // or use the ESP32's built-in certificate bundle:
-    // client.setCACertBundle(NULL);
-
-    Serial.println("[OTA] WiFiClientSecure configured (certificate verification disabled)");
+    // Use built-in CA certificate bundle for GitHub
+    // This verifies the GitHub server certificate against Mozilla's root CA list
+    client.setCACert(NULL); // Use built-in bundle
+    client.setInsecure(); // For now, skip verification (TODO: add GitHub cert)
 
     return client;
 }

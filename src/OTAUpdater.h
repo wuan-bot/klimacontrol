@@ -88,9 +88,8 @@ public:
    * Get memory information for OTA operations
    * @param freeHeap [out] Free SRAM in bytes
    * @param minFreeHeap [out] Minimum free SRAM since boot
-   * @param psramFree [out] Free PSRAM in bytes (0 if no PSRAM)
    */
-    static void getMemoryInfo(uint32_t &freeHeap, uint32_t &minFreeHeap, uint32_t &psramFree);
+    static void getMemoryInfo(uint32_t &freeHeap, uint32_t &minFreeHeap);
 
     /**
    * Check if sufficient memory is available for OTA
