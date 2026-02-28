@@ -79,6 +79,13 @@ namespace Sensor {
         return b * gamma / (a - gamma);
     }
 
+    inline const Measurement* findMeasurement(const std::vector<Measurement>& measurements, MeasurementType type) {
+        for (const auto& m : measurements) {
+            if (m.type == type) return &m;
+        }
+        return nullptr;
+    }
+
     struct SensorReading {
         std::vector<Measurement> measurements;
         uint32_t timestamp;

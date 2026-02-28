@@ -36,21 +36,12 @@ namespace Sensor {
             return reading;
         }
 
-        // Extract temperature and humidity from prior measurements for compensation
-        float temp = NAN;
-        float humidity = NAN;
-        for (const auto& m : prior) {
-            if (m.type == MeasurementType::Temperature && std::isnan(temp)) {
-                temp = std::get<float>(m.value);
-            } else if (m.type == MeasurementType::RelativeHumidity && std::isnan(humidity)) {
-                humidity = std::get<float>(m.value);
-            }
-        }
-        bool hasCompensation = !std::isnan(temp) && !std::isnan(humidity);
+        auto* tempM = findMeasurement(prior, MeasurementType::Temperature);
+        auto* rhM = findMeasurement(prior, MeasurementType::RelativeHumidity);
 
 #ifdef ARDUINO
-        int32_t vocIndex = hasCompensation
-            ? sgp.measureVocIndex(temp, humidity)
+        int32_t vocIndex = (tempM && rhM)
+            ? sgp.measureVocIndex(std::get<float>(tempM->value), std::get<float>(rhM->value))
             : sgp.measureVocIndex();
         if (vocIndex >= 0) {
             reading.measurements.push_back({MeasurementType::VocIndex, vocIndex, getType(), false});
