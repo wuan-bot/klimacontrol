@@ -149,6 +149,7 @@ void WebServerManager::setupAPIRoutes() {
         doc["device_id"] = deviceConfig.device_id;
         doc["device_name"] = deviceConfig.device_name;
         doc["firmware_version"] = FIRMWARE_VERSION;
+        doc["elevation"] = deviceConfig.elevation;
 
         // OTA partition info
         const esp_partition_t *running_partition = esp_ota_get_running_partition();
@@ -165,13 +166,12 @@ void WebServerManager::setupAPIRoutes() {
             float temperature = sensorController.getTemperature();
             if (!isnan(temperature)) doc["temperature"] = temperature;
             float relativeHumidity = sensorController.getRelativeHumidity();
-            if (!isnan(relativeHumidity)) doc["relativeHumidity"] = relativeHumidity;
+            if (!isnan(relativeHumidity)) doc["relative_humidity"] = relativeHumidity;
             float dewPoint = sensorController.getDewPoint();
-            if (!isnan(dewPoint)) doc["dewPoint"] = dewPoint;
-            int32_t vocIndex = sensorController.getVocIndex();
-            if (vocIndex >= 0) doc["vocIndex"] = vocIndex;
+            if (!isnan(dewPoint)) doc["dew_point"] = dewPoint;
             doc["sensor_timestamp"] = sensorController.getLastReadingTimestamp();
         }
+
 
         // Temperature control info
         doc["target_temperature"] = sensorController.getTargetTemperature();
@@ -478,6 +478,40 @@ void WebServerManager::setupAPIRoutes() {
 
                       // Send success response (no restart needed)
                       request->send(200, CONTENT_TYPE_JSON, "{\"success\":true}");
+                  }
+              }
+    );
+
+    // POST /api/settings/elevation - Update station elevation
+    server.on("/api/settings/elevation", HTTP_POST,
+              []([[maybe_unused]] AsyncWebServerRequest *request) {
+              },
+              nullptr,
+              [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
+                  if (index == 0) {
+                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      DeserializationError error = deserializeJson(doc, data, len);
+
+                      if (error) {
+                          request->send(400, CONTENT_TYPE_JSON, JSON_RESPONSE_ERROR_INVALID_JSON);
+                          return;
+                      }
+
+                      if (!doc.containsKey("elevation")) {
+                          request->send(400, CONTENT_TYPE_JSON,
+                                        R"({"success":false,"error":"Elevation required"})");
+                          return;
+                      }
+
+                      float elevation = doc["elevation"].as<float>();
+
+                      Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
+                      deviceConfig.elevation = elevation;
+                      config.saveDeviceConfig(deviceConfig);
+
+                      Serial.printf("Elevation updated: %.0f m\n", elevation);
+
+                      request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
                   }
               }
     );

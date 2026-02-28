@@ -45,11 +45,13 @@ namespace Config {
         uint8_t sensor_i2c_address; // Default I2C address for sensors
         float target_temperature; // Target temperature for control
         bool temperature_control_enabled; // Temperature control enabled
-        
+        float elevation; // Meters above sea level, for sea-level pressure calculation
+
         DeviceConfig() :
             sensor_i2c_address(0x44), // Default SHT4x address
             target_temperature(22.0f),
-            temperature_control_enabled(false)
+            temperature_control_enabled(false),
+            elevation(0.0f)
         {
             device_id[0] = '\0';
             device_name[0] = '\0';

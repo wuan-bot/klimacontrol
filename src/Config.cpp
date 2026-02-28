@@ -91,6 +91,7 @@ namespace Config {
         config.sensor_i2c_address = prefs.getUChar("sensor_i2c_address", 0x44);
         config.target_temperature = prefs.getFloat("target_temperature", 22.0f);
         config.temperature_control_enabled = prefs.getBool("temperature_control_enabled", false);
+        config.elevation = prefs.getFloat("elevation", 0.0f);
 
         prefs.end();
 
@@ -119,7 +120,8 @@ namespace Config {
         prefs.putUChar("sensor_i2c_address", config.sensor_i2c_address);
         prefs.putFloat("target_temperature", config.target_temperature);
         prefs.putBool("temperature_control_enabled", config.temperature_control_enabled);
-        
+        prefs.putFloat("elevation", config.elevation);
+
         prefs.end();
 #endif
     }

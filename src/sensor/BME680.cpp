@@ -42,10 +42,11 @@ namespace Sensor {
 
 #ifdef ARDUINO
         if (bme->performReading()) {
-            float t = bme->temperature;
-            float rh = bme->humidity;
-            reading.measurements.push_back({MeasurementType::RelativeHumidity, rh, getType(), false});
-            reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(t, rh), getType(), true});
+            float temperature = bme->temperature;
+            float relative_humidity = bme->humidity;
+            reading.measurements.push_back({MeasurementType::Temperature, temperature, getType(), false});
+            reading.measurements.push_back({MeasurementType::RelativeHumidity, relative_humidity, getType(), false});
+            reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(temperature, relative_humidity), getType(), true});
             reading.measurements.push_back({MeasurementType::Pressure, bme->pressure / 100.0f, getType(), false});
 
             reading.valid = true;

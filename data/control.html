@@ -136,14 +136,14 @@
                 
                 // Update humidity display
                 const humidityElement = document.getElementById('currentHumidity');
-                if (humidityElement && currentStatus.relativeHumidity !== undefined) {
-                    humidityElement.textContent = `${currentStatus.relativeHumidity.toFixed(1)} %`;
+                if (humidityElement && currentStatus.relative_humidity !== undefined) {
+                    humidityElement.textContent = `${currentStatus.relative_humidity.toFixed(1)} %`;
                 }
 
                 // Update dew point display from measurements array
                 const dewPointElement = document.getElementById('currentDewPoint');
-                if (dewPointElement && currentStatus.dewPoint !== undefined) {
-                    dewPointElement.textContent = `${currentStatus.dewPoint.toFixed(1)} °C`;
+                if (dewPointElement && currentStatus.dew_point !== undefined) {
+                    dewPointElement.textContent = `${currentStatus.dew_point.toFixed(1)} °C`;
                 }
                 
                 // Update target temperature display

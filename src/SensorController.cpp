@@ -148,6 +148,19 @@ void SensorController::readSensors() {
         // }
     }
 
+    // Derive sea-level pressure from station pressure and configured elevation
+    if (anyValid) {
+        float elevation = config.loadDeviceConfig().elevation;
+        if (elevation > 0.0f) {
+            const Sensor::Measurement* pressure = Sensor::findMeasurement(allMeasurements, Sensor::MeasurementType::Pressure);
+            if (pressure) {
+                float stationPressure = std::get<float>(pressure->value);
+                float seaLevelPressure = stationPressure / powf(1.0f - elevation / 44330.0f, 5.255f);
+                allMeasurements.push_back({Sensor::MeasurementType::SeaLevelPressure, seaLevelPressure, pressure->sensor, true});
+            }
+        }
+    }
+
     if (anyValid) {
         currentMeasurements = std::move(allMeasurements);
         lastReadingTimestamp = timestamp;

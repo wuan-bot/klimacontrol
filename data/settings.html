@@ -34,6 +34,22 @@
         </div>
 
         <div class="section">
+            <h2>Elevation</h2>
+            <p>Set the station elevation (meters above sea level) to calculate sea-level pressure from the sensor pressure.</p>
+
+            <div class="form-group">
+                <label for="elevation">Elevation (meters)</label>
+                <input type="number" id="elevation" placeholder="0" step="1" min="-500" max="8848" style="width: 120px;">
+            </div>
+
+            <button class="btn btn-primary" onclick="updateElevation()">Update Elevation</button>
+
+            <div class="info-box">
+                <strong>Current: </strong><span id="currentElevation">Loading...</span> m
+            </div>
+        </div>
+
+        <div class="section">
             <h2>I2C Sensors</h2>
             <p>Configure which sensors are connected to the I2C bus (STEMMA QT connector). Changes require a restart.</p>
 
@@ -221,7 +237,9 @@
         try {
             const response = await fetch('/api/status');
             const data = await response.json();
-            document.getElementById('currentDeviceName').textContent = data.device_name || data.device_id;
+            const name = data.device_name || data.device_id;
+            document.getElementById('currentDeviceName').textContent = name;
+            document.getElementById('deviceName').value = name;
         } catch (error) {
             console.error('Failed to load device name:', error);
             document.getElementById('currentDeviceName').textContent = 'Error loading';
@@ -246,7 +264,6 @@
 
             if (response.ok) {
                 alert('Device name updated successfully!');
-                document.getElementById('deviceName').value = '';
                 loadDeviceName();
             } else {
                 const data = await response.json();
@@ -707,8 +724,50 @@
         btn.textContent = 'Scan I2C Bus';
     }
 
+    // Elevation Functions
+    async function loadElevation() {
+        try {
+            const response = await fetch('/api/status');
+            const data = await response.json();
+            const elevation = data.elevation ?? 0;
+            document.getElementById('currentElevation').textContent = elevation;
+            document.getElementById('elevation').value = elevation;
+        } catch (error) {
+            console.error('Failed to load elevation:', error);
+            document.getElementById('currentElevation').textContent = 'Error';
+        }
+    }
+
+    async function updateElevation() {
+        const elevation = parseFloat(document.getElementById('elevation').value);
+        if (isNaN(elevation) || elevation < -500 || elevation > 8848) {
+            alert('Please enter a valid elevation between -500 and 8848 meters');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/settings/elevation', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({elevation})
+            });
+
+            if (response.ok) {
+                alert('Elevation updated successfully!');
+                loadElevation();
+            } else {
+                const data = await response.json();
+                alert('Failed to update elevation: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Failed to update elevation:', error);
+            alert('Error updating elevation. Please try again.');
+        }
+    }
+
     // Load device info on page load
     loadDeviceName();
+    loadElevation();
     loadOTAStatus();
     loadTouchConfig();
     loadSensorConfig();
