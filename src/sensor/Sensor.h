@@ -14,6 +14,17 @@ namespace Sensor {
         DewPoint,
         Pressure,
         SeaLevelPressure,
+        CO2,
+        Illuminance,
+        Particles03,
+        Particles05,
+        Particles10,
+        Particles25,
+        Particles50,
+        Particles100,
+        PM10Concentration,
+        PM25Concentration,
+        PM100Concentration,
         VocIndex,
         Rssi,
         Channel,
@@ -30,7 +41,18 @@ namespace Sensor {
             case MeasurementType::DewPoint: return "dew point";
             case MeasurementType::Pressure: return "pressure";
             case MeasurementType::SeaLevelPressure: return "sea level pressure";
-            case MeasurementType::VocIndex: return "voc index";
+            case MeasurementType::CO2: return "CO2";
+            case MeasurementType::Illuminance: return "illuminance";
+            case MeasurementType::Particles03: return "particles_03";
+            case MeasurementType::Particles05: return "particles_05";
+            case MeasurementType::Particles10: return "particles_10";
+            case MeasurementType::Particles25: return "particles_25";
+            case MeasurementType::Particles50: return "particles_50";
+            case MeasurementType::Particles100: return "particles_100";
+            case MeasurementType::PM10Concentration: return "part_con_10";
+            case MeasurementType::PM25Concentration: return "part_con_25";
+            case MeasurementType::PM100Concentration: return "part_con_100";
+            case MeasurementType::VocIndex: return "VOC index";
             case MeasurementType::Rssi: return "rssi";
             case MeasurementType::Channel: return "channel";
             case MeasurementType::System: return "system";
@@ -48,6 +70,17 @@ namespace Sensor {
             case MeasurementType::DewPoint: return "°C";
             case MeasurementType::Pressure: return "hPa";
             case MeasurementType::SeaLevelPressure: return "hPa";
+            case MeasurementType::CO2: return "ppm";
+            case MeasurementType::Illuminance: return "lux";
+            case MeasurementType::Particles03: return "#";
+            case MeasurementType::Particles05: return "#";
+            case MeasurementType::Particles10: return "#";
+            case MeasurementType::Particles25: return "#";
+            case MeasurementType::Particles50: return "#";
+            case MeasurementType::Particles100: return "#";
+            case MeasurementType::PM10Concentration: return "ug/m^3";
+            case MeasurementType::PM25Concentration: return "ug/m^3";
+            case MeasurementType::PM100Concentration: return "ug/m^3";
             case MeasurementType::VocIndex: return "";
             case MeasurementType::Rssi: return "dBm";
             case MeasurementType::Channel: return "";

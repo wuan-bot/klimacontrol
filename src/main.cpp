@@ -13,6 +13,9 @@
 #include "sensor/BME680.h"
 #include "sensor/SGP40.h"
 #include "sensor/BMP3xx.h"
+#include "sensor/SCD4x.h"
+#include "sensor/TSL2591.h"
+#include "sensor/PM25.h"
 #include "sensor/DeviceSensor.h"
 #include "task/SensorMonitor.h"
 #include "StatusLed.h"
@@ -64,6 +67,12 @@ void setup() {
                         sensorController.addSensor(std::make_unique<Sensor::SGP40>(addr));
                     } else if (strcmp(name, Sensor::BMP3xx::type()) == 0) {
                         sensorController.addSensor(std::make_unique<Sensor::BMP3xx>(addr));
+                    } else if (strcmp(name, Sensor::SCD4x::type()) == 0) {
+                        sensorController.addSensor(std::make_unique<Sensor::SCD4x>(addr));
+                    } else if (strcmp(name, Sensor::TSL2591::type()) == 0) {
+                        sensorController.addSensor(std::make_unique<Sensor::TSL2591>(addr));
+                    } else if (strcmp(name, Sensor::PM25::type()) == 0) {
+                        sensorController.addSensor(std::make_unique<Sensor::PM25>(addr));
                     } else {
                         Serial.printf("Unknown sensor type: %s\n", name);
                         token = strtok(nullptr, ",");

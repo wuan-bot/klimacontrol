@@ -37,13 +37,14 @@ namespace Sensor {
             return reading;
         }
 
-        auto* tempM = findMeasurement(prior, MeasurementType::Temperature);
-        auto* rhM = findMeasurement(prior, MeasurementType::RelativeHumidity);
+        auto* temperature = findMeasurement(prior, MeasurementType::Temperature);
+        auto* relativeHumidity = findMeasurement(prior, MeasurementType::RelativeHumidity);
 
 #ifdef ARDUINO
-        int32_t vocIndex = (tempM && rhM)
-            ? sgp.measureVocIndex(std::get<float>(tempM->value), std::get<float>(rhM->value))
+        int32_t vocIndex = (temperature && relativeHumidity)
+            ? sgp.measureVocIndex(std::get<float>(temperature->value), std::get<float>(relativeHumidity->value))
             : sgp.measureVocIndex();
+
         if (vocIndex >= 0) {
             reading.measurements.push_back({MeasurementType::VocIndex, vocIndex, getType(), false});
             reading.valid = true;

@@ -15,9 +15,9 @@ namespace Sensor {
 
         bool begin() override;
         SensorReading read() override;
-        const char* getType() const override { return type(); }
+        [[nodiscard]] const char* getType() const override { return type(); }
         bool isConnected() override;
-        TypeSpan provides() const override {
+        [[nodiscard]] TypeSpan provides() const override {
             static constexpr MeasurementType types[] = {
                 MeasurementType::Rssi, MeasurementType::Channel,
                 MeasurementType::System, MeasurementType::FreeHeap, MeasurementType::Uptime

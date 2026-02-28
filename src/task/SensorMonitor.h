@@ -17,7 +17,7 @@ namespace Task {
         SensorController &controller;
         TaskHandle_t taskHandle = nullptr;
         
-        unsigned long readingInterval = 10000; // 10 seconds default
+        unsigned long readingInterval = 1000;
         
     public:
         /**

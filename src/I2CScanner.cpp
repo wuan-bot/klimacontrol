@@ -3,6 +3,9 @@
 #include "sensor/BME680.h"
 #include "sensor/SGP40.h"
 #include "sensor/BMP3xx.h"
+#include "sensor/SCD4x.h"
+#include "sensor/TSL2591.h"
+#include "sensor/PM25.h"
 
 #ifdef ARDUINO
 #include <Wire.h>
@@ -16,6 +19,9 @@ namespace I2CScanner {
         {Sensor::BME680::type(), Sensor::BME680::addresses(), Sensor::BME680::addressCount()},
         {Sensor::SGP40::type(), Sensor::SGP40::addresses(), Sensor::SGP40::addressCount()},
         {Sensor::BMP3xx::type(), Sensor::BMP3xx::addresses(), Sensor::BMP3xx::addressCount()},
+        {Sensor::SCD4x::type(), Sensor::SCD4x::addresses(), Sensor::SCD4x::addressCount()},
+        {Sensor::TSL2591::type(), Sensor::TSL2591::addresses(), Sensor::TSL2591::addressCount()},
+        {Sensor::PM25::type(), Sensor::PM25::addresses(), Sensor::PM25::addressCount()},
     };
     static constexpr size_t REGISTRY_SIZE = sizeof(REGISTRY) / sizeof(REGISTRY[0]);
 

@@ -35,13 +35,15 @@ namespace Task {
     
     void SensorMonitor::task() {
         while (true) {
+            auto startTime = millis();
             controller.readSensors();
 
             if (controller.isControlEnabled()) {
                 controller.updateControl();
             }
+            auto duration = std::max(readingInterval - (millis() - startTime), 1ul);
 
-            vTaskDelay(readingInterval / portTICK_PERIOD_MS);
+            vTaskDelay(duration / portTICK_PERIOD_MS);
         }
     }
 #endif

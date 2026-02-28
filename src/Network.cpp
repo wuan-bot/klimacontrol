@@ -374,7 +374,7 @@ void Network::configureUsingAPMode() {
             if (mqttClient) {
                 mqttClient->loop();
 
-                if (mqttClient->isConnected() && sensorController.isDataValid()) {
+                if (mqttClient->isConnected() && sensorController.isDataValid() && now >= 60000) {
                     uint32_t intervalMs = mqttClient->getIntervalMs();
                     if (intervalMs > 0 && (now - lastMqttPublish >= intervalMs)) {
                         lastMqttPublish = now;
