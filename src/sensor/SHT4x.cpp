@@ -46,9 +46,9 @@ namespace Sensor {
         if (sht4x.getEvent(&humidity, &temp)) {
             float t = temp.temperature;
             float rh = humidity.relative_humidity;
-            reading.measurements.push_back({"temperature", t, "°C", "SHT4x", false});
-            reading.measurements.push_back({"relative humidity", rh, "%", "SHT4x", false});
-            reading.measurements.push_back({"dew point", calcDewPoint(t, rh), "°C", "SHT4x", true});
+            reading.measurements.push_back({MeasurementType::Temperature, t, getType(), false});
+            reading.measurements.push_back({MeasurementType::RelativeHumidity, rh, getType(), false});
+            reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(t, rh), getType(), true});
 
             reading.valid = true;
         } else {
@@ -59,10 +59,10 @@ namespace Sensor {
         // For native testing, return some dummy values
         float t = 22.5f;
         float rh = 45.0f;
-        reading.measurements.push_back({"temperature", t, "°C", "SHT4x", false});
-        reading.measurements.push_back({"humidity", rh, "%", "SHT4x", false});
+        reading.measurements.push_back({MeasurementType::Temperature, t, getType(), false});
+        reading.measurements.push_back({MeasurementType::RelativeHumidity, rh, getType(), false});
 
-        reading.measurements.push_back({"dew_point", calcDewPoint(t, rh), "°C", "SHT4x", true});
+        reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(t, rh), getType(), true});
 
         reading.valid = true;
 #endif

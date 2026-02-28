@@ -9,12 +9,64 @@
 
 namespace Sensor {
 
+    enum class MeasurementType : uint8_t {
+        Temperature,
+        RelativeHumidity,
+        DewPoint,
+        Pressure,
+        VocIndex,
+        Rssi,
+        Channel,
+        System,
+        FreeHeap,
+        Uptime,
+        Time
+    };
+
+    inline const char* measurementTypeLabel(MeasurementType t) {
+        switch (t) {
+            case MeasurementType::Temperature:      return "temperature";
+            case MeasurementType::RelativeHumidity:  return "relative humidity";
+            case MeasurementType::DewPoint:          return "dew point";
+            case MeasurementType::Pressure:          return "pressure";
+            case MeasurementType::VocIndex:          return "voc index";
+            case MeasurementType::Rssi:              return "rssi";
+            case MeasurementType::Channel:           return "channel";
+            case MeasurementType::System:            return "system";
+            case MeasurementType::FreeHeap:          return "free_heap";
+            case MeasurementType::Uptime:            return "uptime";
+            case MeasurementType::Time:              return "time";
+        }
+        return "unknown";
+    }
+
+    inline const char* measurementTypeUnit(MeasurementType t) {
+        switch (t) {
+            case MeasurementType::Temperature:      return "°C";
+            case MeasurementType::RelativeHumidity:  return "%";
+            case MeasurementType::DewPoint:          return "°C";
+            case MeasurementType::Pressure:          return "hPa";
+            case MeasurementType::VocIndex:          return "";
+            case MeasurementType::Rssi:              return "dBm";
+            case MeasurementType::Channel:           return "";
+            case MeasurementType::System:            return "°C";
+            case MeasurementType::FreeHeap:          return "kB";
+            case MeasurementType::Uptime:            return "s";
+            case MeasurementType::Time:              return "ms";
+        }
+        return "";
+    }
+
+    struct TypeSpan {
+        const MeasurementType* data;
+        uint8_t count;
+    };
+
     using Value = std::variant<float, int32_t>;
 
     struct Measurement {
-        const char* type;       // e.g., "temperature", "humidity", "pressure", "co2"
+        MeasurementType type;
         Value value;
-        const char* unit;       // e.g., "°C", "%", "hPa", "ppm"
         const char* sensor;     // e.g., "SHT4x", "BME680"
         bool calculated;        // true for derived values (dew point, sea-level pressure)
     };
@@ -42,8 +94,11 @@ namespace Sensor {
         virtual ~Sensor() = default;
         virtual bool begin() = 0;
         virtual SensorReading read() = 0;
+        virtual SensorReading read(const std::vector<Measurement>& prior) { (void)prior; return read(); }
         virtual const char* getType() const = 0;
         virtual bool isConnected() = 0;
+        virtual TypeSpan provides() const { return {nullptr, 0}; }
+        virtual TypeSpan requires() const { return {nullptr, 0}; }
     };
 
     /**

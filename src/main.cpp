@@ -84,9 +84,6 @@ void setup() {
     // Initialize sensor controller
     sensorController.begin();
     
-    // Set network pointer for status LED control
-    sensorController.setNetwork(&network);
-    
     // Apply sensor configuration from the already loaded deviceConfig
     sensorController.setTargetTemperature(deviceConfig.target_temperature);
     sensorController.setControlEnabled(deviceConfig.temperature_control_enabled);

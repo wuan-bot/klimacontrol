@@ -315,13 +315,13 @@ void WebServerManager::setupAPIRoutes() {
         if (sensorController.isDataValid()) {
             for (const auto &m : sensorController.getMeasurements()) {
                 JsonObject mObj = measurements.createNestedObject();
-                mObj["type"] = m.type;
+                mObj["type"] = Sensor::measurementTypeLabel(m.type);
                 if (auto* i = std::get_if<int32_t>(&m.value)) {
                     mObj["value"] = *i;
                 } else {
                     mObj["value"] = std::get<float>(m.value);
                 }
-                mObj["unit"] = m.unit;
+                mObj["unit"] = Sensor::measurementTypeUnit(m.type);
                 mObj["sensor"] = m.sensor;
                 mObj["calculated"] = m.calculated;
             }

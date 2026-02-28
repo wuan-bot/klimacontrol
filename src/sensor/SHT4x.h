@@ -31,6 +31,12 @@ namespace Sensor {
         bool begin() override;
         SensorReading read() override;
         const char* getType() const override { return type(); }
+        TypeSpan provides() const override {
+            static constexpr MeasurementType types[] = {
+                MeasurementType::Temperature, MeasurementType::RelativeHumidity, MeasurementType::DewPoint
+            };
+            return {types, 3};
+        }
 
         /**
          * Factory for creating SHT4x sensors

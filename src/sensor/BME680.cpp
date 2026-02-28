@@ -44,10 +44,9 @@ namespace Sensor {
         if (bme->performReading()) {
             float t = bme->temperature;
             float rh = bme->humidity;
-            reading.measurements.push_back({"temperature", t, "°C", "BME680", false});
-            reading.measurements.push_back({"relative humidity", rh, "%", "BME680", false});
-            reading.measurements.push_back({"dew point", calcDewPoint(t, rh), "°C", "BME680", true});
-            reading.measurements.push_back({"pressure", bme->pressure / 100.0f, "hPa", "BME680", false});
+            reading.measurements.push_back({MeasurementType::RelativeHumidity, rh, getType(), false});
+            reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(t, rh), getType(), true});
+            reading.measurements.push_back({MeasurementType::Pressure, bme->pressure / 100.0f, getType(), false});
 
             reading.valid = true;
         } else {
@@ -57,11 +56,11 @@ namespace Sensor {
 #else
         float t = 23.0f;
         float rh = 50.0f;
-        reading.measurements.push_back({"temperature", t, "°C", "BME680", false});
-        reading.measurements.push_back({"humidity", rh, "%", "BME680", false});
-        reading.measurements.push_back({"pressure", 1013.25f, "hPa", "BME680", false});
+        reading.measurements.push_back({MeasurementType::Temperature, t, getType(), false});
+        reading.measurements.push_back({MeasurementType::RelativeHumidity, rh, getType(), false});
+        reading.measurements.push_back({MeasurementType::Pressure, 1013.25f, getType(), false});
 
-        reading.measurements.push_back({"dew_point", calcDewPoint(t, rh), "°C", "BME680", true});
+        reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(t, rh), getType(), true});
 
         reading.valid = true;
 #endif

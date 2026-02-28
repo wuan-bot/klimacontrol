@@ -6,8 +6,6 @@
 #include "sensor/Sensor.h"
 #include "Config.h"
 
-class Network;
-
 namespace Sensor {
     class Sensor;
 }
@@ -18,11 +16,12 @@ namespace Sensor {
 class SensorController {
 private:
     Config::ConfigManager &config;
-    Network *network; // Pointer to network for status LED control
     std::vector<std::unique_ptr<Sensor::Sensor>> sensors;
     std::vector<Sensor::Measurement> currentMeasurements;
     uint32_t lastReadingTimestamp;
     bool dataValid;
+
+    void sortSensors();
 
     // Temperature control state
     float targetTemperature;
@@ -31,8 +30,6 @@ private:
 
 public:
     explicit SensorController(Config::ConfigManager &config);
-
-    void setNetwork(Network *network);
 
     // Delete copy constructor and assignment operator
     SensorController(const SensorController &) = delete;
@@ -89,9 +86,6 @@ public:
     float updateControl();
     uint32_t getTimeSinceLastReading() const;
     bool hasConnectedSensors() const;
-
-    void setStatusLedMeasuring();
-    void setStatusLedNormal();
 
 };
 

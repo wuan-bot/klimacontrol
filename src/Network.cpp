@@ -431,17 +431,17 @@ void Network::publishMeasurements(const std::vector<Sensor::Measurement>& measur
 
     for (const auto& m : measurements) {
         char topic[128];
-        snprintf(topic, sizeof(topic), "%s/%s", mqttConfig.prefix, m.type);
+        snprintf(topic, sizeof(topic), "%s/%s", mqttConfig.prefix, Sensor::measurementTypeLabel(m.type));
 
         char payload[256];
         if (auto* i = std::get_if<int32_t>(&m.value)) {
             snprintf(payload, sizeof(payload),
                 "{\"time\":%u,\"value\":%d,\"unit\":\"%s\",\"sensor\":\"%s\",\"calculated\":%s}",
-                epoch, *i, m.unit, m.sensor, m.calculated ? "true" : "false");
+                epoch, *i, Sensor::measurementTypeUnit(m.type), m.sensor, m.calculated ? "true" : "false");
         } else {
             snprintf(payload, sizeof(payload),
                 "{\"time\":%u,\"value\":%.2f,\"unit\":\"%s\",\"sensor\":\"%s\",\"calculated\":%s}",
-                epoch, std::get<float>(m.value), m.unit, m.sensor, m.calculated ? "true" : "false");
+                epoch, std::get<float>(m.value), Sensor::measurementTypeUnit(m.type), m.sensor, m.calculated ? "true" : "false");
         }
 
         mqttClient->publish(topic, payload);
