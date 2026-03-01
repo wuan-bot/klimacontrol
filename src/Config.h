@@ -10,16 +10,6 @@
 
 namespace Config {
     /**
-     * JSON Document size constants
-     */
-    constexpr size_t JSON_DOC_TINY   = 128;
-    constexpr size_t JSON_DOC_SMALL  = 256;
-    constexpr size_t JSON_DOC_MEDIUM = 512;
-    constexpr size_t JSON_DOC_LARGE  = 1024;
-    constexpr size_t JSON_DOC_XLARGE = 2048;
-    constexpr size_t JSON_DOC_OTA    = 10240;
-
-    /**
      * WiFi configuration structure
      */
     struct WiFiConfig {
@@ -28,9 +18,7 @@ namespace Config {
         bool configured;
         uint8_t connection_failures; // Track consecutive connection failures
 
-        WiFiConfig() : configured(false), connection_failures(0) {
-            ssid[0] = '\0';
-            password[0] = '\0';
+        WiFiConfig() : configured(false), connection_failures(0), ssid(""), password("") {
         }
     };
 
@@ -40,21 +28,19 @@ namespace Config {
     struct DeviceConfig {
         char device_id[16]; // e.g., "AABBCC"
         char device_name[32]; // Custom device name
-        
+
         // Sensor and temperature control configuration
         uint8_t sensor_i2c_address; // Default I2C address for sensors
         float target_temperature; // Target temperature for control
         bool temperature_control_enabled; // Temperature control enabled
         float elevation; // Meters above sea level, for sea-level pressure calculation
 
-        DeviceConfig() :
-            sensor_i2c_address(0x44), // Default SHT4x address
-            target_temperature(22.0f),
-            temperature_control_enabled(false),
-            elevation(0.0f)
-        {
-            device_id[0] = '\0';
-            device_name[0] = '\0';
+        DeviceConfig() : sensor_i2c_address(0x44), // Default SHT4x address
+                         target_temperature(22.0f),
+                         temperature_control_enabled(false),
+                         elevation(0.0f),
+                         device_id(""),
+                         device_name("") {
         }
     };
 
@@ -71,8 +57,8 @@ namespace Config {
      * Timer types
      */
     enum class TimerType : uint8_t {
-        COUNTDOWN = 0,    // One-shot countdown timer (duration-based)
-        ALARM_DAILY = 1   // Recurring daily alarm
+        COUNTDOWN = 0, // One-shot countdown timer (duration-based)
+        ALARM_DAILY = 1 // Recurring daily alarm
     };
 
     /**
@@ -83,7 +69,7 @@ namespace Config {
         TimerType type = TimerType::COUNTDOWN;
         TimerAction action = TimerAction::ENABLE_CONTROL;
         uint8_t preset_index = 0;
-        uint32_t target_time = 0;      // epoch for COUNTDOWN, seconds-since-midnight for ALARM_DAILY
+        uint32_t target_time = 0; // epoch for COUNTDOWN, seconds-since-midnight for ALARM_DAILY
         uint32_t duration_seconds = 0; // original duration for countdown display
     };
 
@@ -104,8 +90,8 @@ namespace Config {
         uint16_t port;
         char username[64];
         char password[64];
-        char prefix[64];         // topic prefix, e.g. "sensors/bedroom"
-        uint16_t interval;       // publish interval in seconds
+        char prefix[64]; // topic prefix, e.g. "sensors/bedroom"
+        uint16_t interval; // publish interval in seconds
         bool enabled;
 
         MqttConfig() : port(1883), interval(15), enabled(false) {
@@ -131,8 +117,8 @@ namespace Config {
      */
     struct TouchConfig {
         static constexpr uint8_t MAX_TOUCH_PINS = 3;
-        bool enabled;                              // Touch control enabled
-        uint16_t threshold;                        // Touch detection threshold (lower = more sensitive)
+        bool enabled; // Touch control enabled
+        uint16_t threshold; // Touch detection threshold (lower = more sensitive)
 
         TouchConfig() : enabled(true), threshold(45000) {
         }

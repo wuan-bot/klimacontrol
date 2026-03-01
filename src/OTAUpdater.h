@@ -59,7 +59,7 @@ public:
     static bool performUpdate(
         const String &downloadUrl,
         size_t expectedSize,
-        std::function<void(int, size_t)> onProgress = nullptr
+        const std::function<void(int, size_t)> &onProgress = nullptr
     );
 
     /**

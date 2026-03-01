@@ -42,8 +42,8 @@ static const char* JSON_KEY_INDEX = "index";
 
 // Common JSON Responses
 static const char* JSON_RESPONSE_SUCCESS = "{\"success\":true}";
-static const char* JSON_RESPONSE_ERROR_INVALID_JSON = "{\"success\":false,\"error\":\"Invalid JSON\"}";
-static const char* JSON_RESPONSE_ERROR_QUEUE_FULL = "{\"success\":false,\"error\":\"Queue full\"}";
+static const char* JSON_RESPONSE_ERROR_INVALID_JSON = R"({"success":false,"error":"Invalid JSON"})";
+static const char* JSON_RESPONSE_ERROR_QUEUE_FULL = R"({"success":false,"error":"Queue full"})";
 
 // API Paths
 static const char* API_PATH_WIFI = "/api/wifi";
@@ -142,7 +142,7 @@ void WebServerManager::setupAPIRoutes() {
 
     // GET /api/status - Get device status
     server.on(API_PATH_STATUS, HTTP_GET, [this](AsyncWebServerRequest *request) {
-        StaticJsonDocument<Config::JSON_DOC_LARGE> doc;
+        JsonDocument doc;
 
         // Device info
         Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
@@ -194,8 +194,8 @@ void WebServerManager::setupAPIRoutes() {
     server.on("/api/sensors/config", HTTP_GET, [this](AsyncWebServerRequest *request) {
         Config::SensorConfig sensorConfig = config.loadSensorConfig();
 
-        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
-        JsonArray arr = doc.createNestedArray("devices");
+        JsonDocument doc;
+        JsonArray arr = doc["devices"].to<JsonArray>();
 
         // Parse assignment string "44=SHT4x,77=BME680" into JSON array
         char buf[128];
@@ -207,10 +207,10 @@ void WebServerManager::setupAPIRoutes() {
             char* eq = strchr(token, '=');
             if (eq) {
                 *eq = '\0';
-                uint8_t addr = (uint8_t)strtoul(token, nullptr, 10);
+                auto addr = (uint8_t)strtoul(token, nullptr, 10);
                 const char* name = eq + 1;
 
-                JsonObject obj = arr.createNestedObject();
+                auto obj = arr.add<JsonObject>();
                 obj["address"] = addr;
                 obj["type"] = name;
             }
@@ -225,12 +225,12 @@ void WebServerManager::setupAPIRoutes() {
     // GET /api/sensors/registry - Get known sensor types and their I2C addresses
     // NOTE: Must be registered before /api/sensors to avoid prefix matching
     server.on("/api/sensors/registry", HTTP_GET, [](AsyncWebServerRequest *request) {
-        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+        JsonDocument doc;
 
         size_t registryCount;
         const SensorInfo* registry = I2CScanner::getRegistry(registryCount);
         for (size_t i = 0; i < registryCount; i++) {
-            JsonArray addrs = doc.createNestedArray(registry[i].name);
+            JsonArray addrs = doc[registry[i].name].to<JsonArray>();
             for (uint8_t j = 0; j < registry[i].addressCount; j++) {
                 addrs.add(registry[i].addresses[j]);
             }
@@ -250,7 +250,7 @@ void WebServerManager::setupAPIRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -287,13 +287,13 @@ void WebServerManager::setupAPIRoutes() {
 
     // GET /api/sensors - Get sensor information
     server.on("/api/sensors", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        StaticJsonDocument<Config::JSON_DOC_LARGE> doc;
-        JsonArray sensors = doc.createNestedArray("sensors");
+        JsonDocument doc;
+        JsonArray sensors = doc["sensors"].to<JsonArray>();
 
         for (size_t i = 0; i < sensorController.getSensorCount(); i++) {
             Sensor::Sensor *sensor = sensorController.getSensor(i);
             if (sensor) {
-                JsonObject sensorObj = sensors.createNestedObject();
+                auto sensorObj = sensors.add<JsonObject>();
                 sensorObj["type"] = sensor->getType();
                 sensorObj["connected"] = sensor->isConnected();
             }
@@ -308,10 +308,10 @@ void WebServerManager::setupAPIRoutes() {
         doc["data_timestamp"] = sensorController.getLastReadingTimestamp();
 
         // Add measurements array
-        JsonArray measurements = doc.createNestedArray("measurements");
+        JsonArray measurements = doc["measurements"].to<JsonArray>();
         if (sensorController.isDataValid()) {
             for (const auto &m : sensorController.getMeasurements()) {
-                JsonObject mObj = measurements.createNestedObject();
+                auto mObj = measurements.add<JsonObject>();
                 mObj["type"] = Sensor::measurementTypeLabel(m.type);
                 if (auto* i = std::get_if<int32_t>(&m.value)) {
                     mObj["value"] = *i;
@@ -336,7 +336,7 @@ void WebServerManager::setupAPIRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_TINY> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -344,7 +344,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      if (!doc.containsKey(JSON_KEY_VALUE)) {
+                      if (!doc[JSON_KEY_VALUE].is<float>()) {
                           request->send(400, CONTENT_TYPE_JSON,
                                         R"({"success":false,"error":"Value required"})");
                           return;
@@ -401,7 +401,7 @@ void WebServerManager::setupAPIRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
 
                       if (deserializeJson(doc, data, len)) {
                           request->send(400, CONTENT_TYPE_JSON, JSON_RESPONSE_ERROR_INVALID_JSON);
@@ -449,7 +449,7 @@ void WebServerManager::setupAPIRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -486,7 +486,7 @@ void WebServerManager::setupAPIRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -494,13 +494,13 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      if (!doc.containsKey("elevation")) {
+                      if (!doc["elevation"].is<float>()) {
                           request->send(400, CONTENT_TYPE_JSON,
                                         R"({"success":false,"error":"Elevation required"})");
                           return;
                       }
 
-                      float elevation = doc["elevation"].as<float>();
+                      auto elevation = doc["elevation"].as<float>();
 
                       Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
                       deviceConfig.elevation = elevation;
@@ -521,7 +521,7 @@ void WebServerManager::setupAPIRoutes() {
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index,
                      [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -576,14 +576,14 @@ void WebServerManager::setupAPIRoutes() {
 
     // GET /api/about - Device information
     server.on("/api/about", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        StaticJsonDocument<Config::JSON_DOC_LARGE> doc;
+        JsonDocument doc;
 
         // Device info
         Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
         doc["device_id"] = deviceConfig.device_id;
 
         // Sensor statistics
-        JsonObject statsJson = doc.createNestedObject("stats");
+        auto statsJson = doc["stats"].to<JsonObject>();
         statsJson["sensor_count"] = sensorController.getSensorCount();
         statsJson["has_connected_sensors"] = sensorController.hasConnectedSensors();
         statsJson["time_since_last_reading"] = sensorController.getTimeSinceLastReading();
@@ -638,7 +638,7 @@ void WebServerManager::setupAPIRoutes() {
         uint32_t currentEpoch = network.getCurrentEpoch();
         const Config::TimersConfig &timersConfig = scheduler->getTimersConfig();
 
-        StaticJsonDocument<Config::JSON_DOC_LARGE> doc;
+        JsonDocument doc;
         doc["timezone_offset_hours"] = timersConfig.timezone_offset_hours;
         doc["current_epoch"] = currentEpoch;
         
@@ -649,10 +649,10 @@ void WebServerManager::setupAPIRoutes() {
             doc["local_seconds_since_midnight"] = 0;
         }
 
-        JsonArray timers = doc.createNestedArray("timers");
+        auto timers = doc["timers"].to<JsonArray>();
         for (uint8_t i = 0; i < Config::TimersConfig::MAX_TIMERS; i++) {
             const Config::TimerEntry &timer = timersConfig.timers[i];
-            JsonObject timerObj = timers.createNestedObject();
+            auto timerObj = timers.add<JsonObject>();
             timerObj["index"] = i;
             timerObj["enabled"] = timer.enabled;
 
@@ -696,7 +696,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -705,7 +705,7 @@ void WebServerManager::setupAPIRoutes() {
                       }
 
                       // Required: duration in seconds
-                      if (!doc.containsKey("duration")) {
+                      if (!doc["duration"].is<uint32_t>()) {
                           request->send(400, CONTENT_TYPE_JSON,
                                         R"({"success":false,"error":"Duration required"})");
                           return;
@@ -744,7 +744,7 @@ void WebServerManager::setupAPIRoutes() {
 
                       uint32_t currentEpoch = network.getCurrentEpoch();
                       if (scheduler->setCountdown(timerIndex, duration, action, presetIndex, currentEpoch)) {
-                          StaticJsonDocument<Config::JSON_DOC_TINY> responseDoc;
+                          JsonDocument responseDoc;
                           responseDoc["success"] = true;
                           responseDoc["index"] = timerIndex;
                           responseDoc["remaining_seconds"] = duration;
@@ -775,7 +775,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -784,7 +784,7 @@ void WebServerManager::setupAPIRoutes() {
                       }
 
                       // Required: hour and minute for the alarm time
-                      if (!doc.containsKey("hour") || !doc.containsKey("minute")) {
+                      if (!doc["hour"].is<int>() || !doc["minute"].is<int>()) {
                           request->send(400, CONTENT_TYPE_JSON,
                                         R"({"success":false,"error":"Hour and minute required"})");
                           return;
@@ -817,7 +817,7 @@ void WebServerManager::setupAPIRoutes() {
 
                       // Optional: action (defaults to TURN_OFF)
                       Config::TimerAction action = Config::TimerAction::DISABLE_CONTROL;
-                      if (doc.containsKey("action")) {
+                      if (doc["action"].is<int>()) {
                           int actionInt = doc["action"];
                           if (actionInt == 0) action = Config::TimerAction::UPDATE_SETPOINT;
                           else action = Config::TimerAction::DISABLE_CONTROL;
@@ -829,7 +829,7 @@ void WebServerManager::setupAPIRoutes() {
                       bool success = scheduler->setDailyAlarm(timerIndex, secondsSinceMidnight, action, presetIndex);
 
                       if (success) {
-                          StaticJsonDocument<Config::JSON_DOC_TINY> responseDoc;
+                          JsonDocument responseDoc;
                           responseDoc["success"] = true;
                           responseDoc["index"] = timerIndex;
 
@@ -859,7 +859,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      StaticJsonDocument<Config::JSON_DOC_TINY> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -867,7 +867,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      if (!doc.containsKey(JSON_KEY_INDEX)) {
+                      if (!doc[JSON_KEY_INDEX].is<int>()) {
                           request->send(400, CONTENT_TYPE_JSON,
                                         R"({"success":false,"error":"Timer index required"})");
                           return;
@@ -905,7 +905,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      StaticJsonDocument<Config::JSON_DOC_TINY> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -913,7 +913,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      if (!doc.containsKey("offset")) {
+                      if (!doc["offset"].is<int>()) {
                           request->send(400, CONTENT_TYPE_JSON,
                                         R"({"success":false,"error":"Timezone offset required"})");
                           return;
@@ -941,16 +941,16 @@ void WebServerManager::setupAPIRoutes() {
             return;
         }
 
-        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+        JsonDocument doc;
         const Config::TouchConfig &touchConfig = touch->getTouchConfig();
 
         doc["enabled"] = touchConfig.enabled;
         doc["threshold"] = touchConfig.threshold;
 
         // Pin mappings
-        JsonArray pins = doc.createNestedArray("pins");
+        auto pins = doc["pins"].to<JsonArray>();
         for (uint8_t i = 0; i < Config::TouchConfig::MAX_TOUCH_PINS; i++) {
-            JsonObject pin = pins.createNestedObject();
+            auto pin = pins.add<JsonObject>();
             pin["index"] = i;
             pin["gpio"] = TouchController::getGpioPin(i);
             pin["action"] = (i == 0) ? "Switch Show" : (i == 1) ? "Switch Variant" : "Switch Layout";
@@ -959,7 +959,7 @@ void WebServerManager::setupAPIRoutes() {
         // Current touch values for debugging/calibration
         uint32_t touchValues[Config::TouchConfig::MAX_TOUCH_PINS];
         touch->getTouchValues(touchValues);
-        JsonArray values = doc.createNestedArray("values");
+        JsonArray values = doc["values"];
         for (uint8_t i = 0; i < Config::TouchConfig::MAX_TOUCH_PINS; i++) {
             values.add(touchValues[i]);
         }
@@ -984,7 +984,7 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -995,12 +995,12 @@ void WebServerManager::setupAPIRoutes() {
                       Config::TouchConfig touchConfig = touch->getTouchConfig();
 
                       // Update enabled state if provided
-                      if (doc.containsKey("enabled")) {
+                      if (doc["enabled"].is<bool>()) {
                           touchConfig.enabled = doc["enabled"];
                       }
 
                       // Update threshold if provided
-                      if (doc.containsKey("threshold")) {
+                      if (doc["threshold"].is<int>()) {
                           touchConfig.threshold = doc["threshold"];
                       }
 
@@ -1012,7 +1012,7 @@ void WebServerManager::setupAPIRoutes() {
 
     // GET /api/ota/check - Check for firmware updates
     server.on(API_PATH_OTA_CHECK, HTTP_GET, [](AsyncWebServerRequest *request) {
-        StaticJsonDocument<Config::JSON_DOC_LARGE> doc;
+        JsonDocument doc;
 
         FirmwareInfo info;
         bool releaseFound = OTAUpdater::checkForUpdate(OTA_GITHUB_OWNER, OTA_GITHUB_REPO, info);
@@ -1053,7 +1053,7 @@ void WebServerManager::setupAPIRoutes() {
                   }
 
                   if (index + len == total) {
-                      StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+                      JsonDocument doc;
                       deserializeJson(doc, data, len);
 
                       String downloadUrl = doc["download_url"] | "";
@@ -1082,7 +1082,7 @@ void WebServerManager::setupAPIRoutes() {
 
     // GET /api/ota/status - Get OTA status
     server.on("/api/ota/status", HTTP_GET, [](AsyncWebServerRequest *request) {
-        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
+        JsonDocument doc;
 
         doc["firmware_version"] = FIRMWARE_VERSION;
         doc["build_date"] = FIRMWARE_BUILD_DATE;
@@ -1100,11 +1100,10 @@ void WebServerManager::setupAPIRoutes() {
         doc["unconfirmed_update"] = OTAUpdater::hasUnconfirmedUpdate();
 
         // Memory info
-        uint32_t freeHeap, minFreeHeap, psramFree;
+        uint32_t freeHeap, minFreeHeap;
         OTAUpdater::getMemoryInfo(freeHeap, minFreeHeap);
         doc["free_heap"] = freeHeap;
         doc["min_free_heap"] = minFreeHeap;
-        doc["psram_free"] = psramFree;
         doc["ota_safe"] = OTAUpdater::hasEnoughMemory();
 
         String response;
@@ -1116,7 +1115,7 @@ void WebServerManager::setupAPIRoutes() {
     server.on("/api/ota/confirm", HTTP_POST, [](AsyncWebServerRequest *request) {
         bool success = OTAUpdater::confirmBoot();
 
-        StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+        JsonDocument doc;
         doc[JSON_KEY_SUCCESS] = success;
         doc["message"] = success ? "Boot confirmed, rollback disabled" : "Failed to confirm boot";
 
@@ -1129,8 +1128,8 @@ void WebServerManager::setupAPIRoutes() {
     server.on("/api/i2c/scan", HTTP_GET, [](AsyncWebServerRequest *request) {
         auto devices = I2CScanner::scan();
 
-        StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
-        JsonArray arr = doc.createNestedArray("devices");
+        JsonDocument doc;
+        JsonArray arr = doc["devices"].to<JsonArray>();
 
         for (const auto& dev : devices) {
             arr.add(dev.address);
@@ -1145,7 +1144,7 @@ void WebServerManager::setupAPIRoutes() {
     server.on("/api/mqtt", HTTP_GET, [this](AsyncWebServerRequest *request) {
         Config::MqttConfig mqttConfig = config.loadMqttConfig();
 
-        StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+        JsonDocument doc;
         doc["enabled"] = mqttConfig.enabled;
         doc["host"] = mqttConfig.host;
         doc["port"] = mqttConfig.port;
@@ -1168,7 +1167,7 @@ void WebServerManager::setupAPIRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+                      JsonDocument doc;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -1178,13 +1177,13 @@ void WebServerManager::setupAPIRoutes() {
 
                       Config::MqttConfig mqttConfig = config.loadMqttConfig();
 
-                      if (doc.containsKey("enabled")) mqttConfig.enabled = doc["enabled"];
-                      if (doc.containsKey("host")) strlcpy(mqttConfig.host, doc["host"] | "", sizeof(mqttConfig.host));
-                      if (doc.containsKey("port")) mqttConfig.port = doc["port"];
-                      if (doc.containsKey("username")) strlcpy(mqttConfig.username, doc["username"] | "", sizeof(mqttConfig.username));
-                      if (doc.containsKey("password")) strlcpy(mqttConfig.password, doc["password"] | "", sizeof(mqttConfig.password));
-                      if (doc.containsKey("prefix")) strlcpy(mqttConfig.prefix, doc["prefix"] | "", sizeof(mqttConfig.prefix));
-                      if (doc.containsKey("interval")) mqttConfig.interval = doc["interval"];
+                      if (doc["enabled"].is<bool>()) mqttConfig.enabled = doc["enabled"];
+                      if (doc["host"].is<const char*>()) strlcpy(mqttConfig.host, doc["host"] | "", sizeof(mqttConfig.host));
+                      if (doc["port"].is<int>()) mqttConfig.port = doc["port"];
+                      if (doc["username"].is<const char*>()) strlcpy(mqttConfig.username, doc["username"] | "", sizeof(mqttConfig.username));
+                      if (doc["password"].is<const char*>()) strlcpy(mqttConfig.password, doc["password"] | "", sizeof(mqttConfig.password));
+                      if (doc["prefix"].is<const char*>()) strlcpy(mqttConfig.prefix, doc["prefix"] | "", sizeof(mqttConfig.prefix));
+                      if (doc["interval"].is<int>()) mqttConfig.interval = doc["interval"];
 
                       config.saveMqttConfig(mqttConfig);
                       network.updateMqttConfig(mqttConfig);
@@ -1225,7 +1224,7 @@ void WebServerManager::handleWiFiConfig(AsyncWebServerRequest *request, uint8_t 
     // Only process the first chunk (index == 0)
     if (index == 0) {
         // Parse JSON body
-        StaticJsonDocument<Config::JSON_DOC_SMALL> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, data, len);
 
         if (error) {
@@ -1268,7 +1267,7 @@ void WebServerManager::handleWiFiConfig(AsyncWebServerRequest *request, uint8_t 
         hostname.toLowerCase();
 
         // Send success response with hostname
-        StaticJsonDocument<Config::JSON_DOC_TINY> responseDoc;
+        JsonDocument responseDoc;
         responseDoc["success"] = true;
         responseDoc["hostname"] = hostname + ".local";
 

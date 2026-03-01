@@ -46,7 +46,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     Serial.printf("[OTA] Free heap before JSON parse: %u bytes\n", freeBefore);
 
     // Use JSON filter to only parse fields we need (saves memory)
-    StaticJsonDocument < Config::JSON_DOC_SMALL > filter;
+    JsonDocument filter;
     filter["tag_name"] = true;
     filter["name"] = true;
     filter["body"] = true;
@@ -54,7 +54,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     filter["assets"] = true;
 
     // Parse JSON response with filter
-    DynamicJsonDocument doc(Config::JSON_DOC_OTA);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, http.getStream(), DeserializationOption::Filter(filter));
 
     uint32_t freeAfter = ESP.getFreeHeap();
@@ -85,7 +85,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     Serial.printf("[OTA] Found %d assets in release\n", assets.size());
 
     for (JsonObject asset: assets) {
-        String assetName = asset["name"].as<String>();
+        auto assetName = asset["name"].as<String>();
         Serial.printf("[OTA] Asset: %s\n", assetName.c_str());
 
         if (assetName.endsWith(".bin")) {
@@ -114,7 +114,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
 bool OTAUpdater::performUpdate(
     const String &downloadUrl,
     size_t expectedSize,
-    std::function<void(int, size_t)> onProgress
+    const std::function<void(int, size_t)> &onProgress
 ) {
     Serial.printf("[OTA] Starting firmware download\n");
     Serial.printf("[OTA] URL: %s\n", downloadUrl.c_str());
