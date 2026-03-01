@@ -4,7 +4,7 @@
 #include "I2CSensor.h"
 
 #ifdef ARDUINO
-#include <SensirionI2CScd4x.h>
+#include <SensirionI2cScd4x.h>
 #endif
 
 namespace Sensor {
