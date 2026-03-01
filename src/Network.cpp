@@ -363,9 +363,13 @@ void Network::configureUsingAPMode() {
             if (mqttClient) {
                 mqttClient->loop();
 
-                if (mqttClient->isConnected() && sensorController.isDataValid() && now >= 60000) {
+                if (mqttClient->isConnected() && sensorController.isDataValid()) {
                     uint32_t intervalMs = mqttClient->getIntervalMs();
-                    if (intervalMs > 0 && (now - lastMqttPublish >= intervalMs)) {
+
+                    // Seed lastMqttPublish on first eligible cycle
+                    if (lastMqttPublish == 0) lastMqttPublish = now;
+
+                    if (intervalMs > 0 && now >= 60000 && (now - lastMqttPublish >= intervalMs)) {
                         lastMqttPublish = now;
                         publishMeasurements(sensorController.getMeasurements());
                         if (statusLed) statusLed->setState(LedState::MQTT_ACTIVE);
