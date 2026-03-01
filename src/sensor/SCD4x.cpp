@@ -14,7 +14,6 @@ namespace Sensor {
         scd.startPeriodicMeasurement();
 
         initialized = true;
-        Serial.println("SCD4x: Sensor initialized successfully");
         return true;
 #else
         initialized = true;

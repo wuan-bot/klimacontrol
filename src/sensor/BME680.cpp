@@ -8,10 +8,8 @@ namespace Sensor {
 
     bool BME680::begin() {
 #ifdef ARDUINO
-        Serial.println("BME680: Initializing sensor...");
 
         if (!bme->begin(i2cAddress)) {
-            Serial.println("BME680: Failed to initialize sensor");
             return false;
         }
 
@@ -23,7 +21,6 @@ namespace Sensor {
         bme->setGasHeater(320, 150); // 320°C for 150ms
 
         initialized = true;
-        Serial.println("BME680: Sensor initialized successfully");
         return true;
 #else
         initialized = true;
@@ -63,7 +60,6 @@ namespace Sensor {
             reading.valid = true;
         } else {
             reading.valid = false;
-            Serial.println("BME680: Failed to read sensor data");
         }
 #else
         float t = 23.0f;

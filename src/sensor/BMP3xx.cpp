@@ -10,7 +10,6 @@ namespace Sensor {
         Serial.println("BMP3xx: Initializing sensor...");
 
         if (!bmp.begin_I2C(i2cAddress, &wire)) {
-            Serial.println("BMP3xx: Failed to initialize sensor");
             return false;
         }
 
@@ -21,7 +20,6 @@ namespace Sensor {
         bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
         initialized = true;
-        Serial.println("BMP3xx: Sensor initialized successfully");
         return true;
 #else
         initialized = true;
@@ -56,7 +54,6 @@ namespace Sensor {
             reading.valid = true;
         } else {
             reading.valid = false;
-            Serial.println("BMP3xx: Failed to read sensor data");
         }
 #else
         float stationPressure = 1013.25f;

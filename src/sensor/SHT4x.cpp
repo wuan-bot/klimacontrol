@@ -10,10 +10,7 @@ namespace Sensor {
 
     bool SHT4x::begin() {
 #ifdef ARDUINO
-        Serial.println("SHT4x: Initializing sensor...");
-
         if (!sht4x.begin(&wire)) {
-            Serial.println("SHT4x: Failed to initialize sensor");
             return false;
         }
 
@@ -22,7 +19,6 @@ namespace Sensor {
         sht4x.setHeater(SHT4X_NO_HEATER);
 
         initialized = true;
-        Serial.println("SHT4x: Sensor initialized successfully");
         return true;
 #else
         // For native testing, just mark as initialized
@@ -53,7 +49,6 @@ namespace Sensor {
             reading.valid = true;
         } else {
             reading.valid = false;
-            Serial.println("SHT4x: Failed to read sensor data");
         }
 #else
         // For native testing, return some dummy values

@@ -7,15 +7,11 @@ namespace Sensor {
 
     bool SGP40::begin() {
 #ifdef ARDUINO
-        Serial.println("SGP40: Initializing sensor...");
-
         if (!sgp.begin(&wire)) {
-            Serial.println("SGP40: Failed to initialize sensor");
             return false;
         }
 
         initialized = true;
-        Serial.println("SGP40: Sensor initialized successfully");
         return true;
 #else
         initialized = true;
@@ -50,7 +46,6 @@ namespace Sensor {
             reading.valid = true;
         } else {
             reading.valid = false;
-            Serial.println("SGP40: Failed to read sensor data");
         }
 #else
         reading.measurements.push_back({MeasurementType::VocIndex, (int32_t)100, getType(), false});

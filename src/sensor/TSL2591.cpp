@@ -7,10 +7,7 @@ namespace Sensor {
 
     bool TSL2591::begin() {
 #ifdef ARDUINO
-        Serial.println("TSL2591: Initializing sensor...");
-
         if (!tsl.begin(&wire, i2cAddress)) {
-            Serial.println("TSL2591: Failed to initialize sensor");
             return false;
         }
 
@@ -18,7 +15,6 @@ namespace Sensor {
         tsl.setTiming(TSL2591_INTEGRATIONTIME_100MS);
 
         initialized = true;
-        Serial.println("TSL2591: Sensor initialized successfully");
         return true;
 #else
         initialized = true;
@@ -46,7 +42,6 @@ namespace Sensor {
             reading.valid = true;
         } else {
             reading.valid = false;
-            Serial.println("TSL2591: Sensor saturated or error");
         }
 #else
         reading.measurements.push_back({MeasurementType::Illuminance, 250.0f, getType(), false});

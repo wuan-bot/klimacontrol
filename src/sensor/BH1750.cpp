@@ -7,15 +7,10 @@ namespace Sensor {
 
     bool BH1750Sensor::begin() {
 #ifdef ARDUINO
-        Serial.println("BH1750: Initializing sensor...");
-
         if (!bh.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, i2cAddress, &wire)) {
-            Serial.println("BH1750: Failed to initialize sensor");
             return false;
         }
-
         initialized = true;
-        Serial.println("BH1750: Sensor initialized successfully");
         return true;
 #else
         initialized = true;
@@ -40,7 +35,6 @@ namespace Sensor {
                 reading.valid = true;
             } else {
                 reading.valid = false;
-                Serial.println("BH1750: Failed to read sensor data");
             }
         } else {
             reading.valid = false;

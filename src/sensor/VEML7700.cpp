@@ -7,10 +7,7 @@ namespace Sensor {
 
     bool VEML7700::begin() {
 #ifdef ARDUINO
-        Serial.println("VEML7700: Initializing sensor...");
-
         if (!veml.begin(&wire)) {
-            Serial.println("VEML7700: Failed to initialize sensor");
             return false;
         }
 
@@ -18,7 +15,6 @@ namespace Sensor {
         veml.setIntegrationTime(VEML7700_IT_100MS);
 
         initialized = true;
-        Serial.println("VEML7700: Sensor initialized successfully");
         return true;
 #else
         initialized = true;
@@ -43,7 +39,6 @@ namespace Sensor {
             reading.valid = true;
         } else {
             reading.valid = false;
-            Serial.println("VEML7700: Failed to read sensor data");
         }
 #else
         reading.measurements.push_back({MeasurementType::Illuminance, 250.0f, getType(), false});

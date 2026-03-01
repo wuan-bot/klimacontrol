@@ -7,10 +7,7 @@ namespace Sensor {
 
     bool DPS310::begin() {
 #ifdef ARDUINO
-        Serial.println("DPS310: Initializing sensor...");
-
         if (!dps.begin_I2C(i2cAddress, &wire)) {
-            Serial.println("DPS310: Failed to initialize sensor");
             return false;
         }
 
@@ -18,7 +15,6 @@ namespace Sensor {
         dps.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
 
         initialized = true;
-        Serial.println("DPS310: Sensor initialized successfully");
         return true;
 #else
         initialized = true;

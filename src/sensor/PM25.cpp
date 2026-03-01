@@ -7,15 +7,11 @@ namespace Sensor {
 
     bool PM25::begin() {
 #ifdef ARDUINO
-        Serial.println("PM25: Initializing sensor...");
-
         if (!aqi.begin_I2C(&wire)) {
-            Serial.println("PM25: Failed to initialize sensor");
             return false;
         }
 
         initialized = true;
-        Serial.println("PM25: Sensor initialized successfully");
         return true;
 #else
         initialized = true;
