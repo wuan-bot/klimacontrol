@@ -16,6 +16,9 @@
 #include "sensor/SCD4x.h"
 #include "sensor/TSL2591.h"
 #include "sensor/PM25.h"
+#include "sensor/VEML7700.h"
+#include "sensor/DPS310.h"
+#include "sensor/BH1750.h"
 #include "sensor/DeviceSensor.h"
 #include "task/SensorMonitor.h"
 #include "StatusLed.h"
@@ -73,6 +76,12 @@ void setup() {
                         sensorController.addSensor(std::make_unique<Sensor::TSL2591>(addr));
                     } else if (strcmp(name, Sensor::PM25::type()) == 0) {
                         sensorController.addSensor(std::make_unique<Sensor::PM25>(addr));
+                    } else if (strcmp(name, Sensor::VEML7700::type()) == 0) {
+                        sensorController.addSensor(std::make_unique<Sensor::VEML7700>(addr));
+                    } else if (strcmp(name, Sensor::DPS310::type()) == 0) {
+                        sensorController.addSensor(std::make_unique<Sensor::DPS310>(addr));
+                    } else if (strcmp(name, Sensor::BH1750Sensor::type()) == 0) {
+                        sensorController.addSensor(std::make_unique<Sensor::BH1750Sensor>(addr));
                     } else {
                         Serial.printf("Unknown sensor type: %s\n", name);
                         token = strtok(nullptr, ",");

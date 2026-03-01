@@ -226,21 +226,18 @@ void WebServerManager::setupAPIRoutes() {
     // NOTE: Must be registered before /api/sensors to avoid prefix matching
     server.on("/api/sensors/registry", HTTP_GET, [](AsyncWebServerRequest *request) {
         StaticJsonDocument<Config::JSON_DOC_MEDIUM> doc;
-        JsonArray arr = doc.createNestedArray("sensors");
 
         size_t registryCount;
         const SensorInfo* registry = I2CScanner::getRegistry(registryCount);
         for (size_t i = 0; i < registryCount; i++) {
-            JsonObject obj = arr.createNestedObject();
-            obj["type"] = registry[i].name;
-            JsonArray addrs = obj.createNestedArray("addresses");
+            JsonArray addrs = doc.createNestedArray(registry[i].name);
             for (uint8_t j = 0; j < registry[i].addressCount; j++) {
                 addrs.add(registry[i].addresses[j]);
             }
         }
-
         String response;
         serializeJson(doc, response);
+
         request->send(200, CONTENT_TYPE_JSON, response);
     });
 
@@ -1128,7 +1125,7 @@ void WebServerManager::setupAPIRoutes() {
         request->send(success ? 200 : 500, CONTENT_TYPE_JSON, response);
     });
 
-    // GET /api/i2c/scan - Scan I2C bus for devices (with possible sensor types)
+    // GET /api/i2c/scan - Scan I2C bus for devices (addresses only, types come from registry)
     server.on("/api/i2c/scan", HTTP_GET, [](AsyncWebServerRequest *request) {
         auto devices = I2CScanner::scan();
 
@@ -1136,18 +1133,7 @@ void WebServerManager::setupAPIRoutes() {
         JsonArray arr = doc.createNestedArray("devices");
 
         for (const auto& dev : devices) {
-            JsonObject obj = arr.createNestedObject();
-            obj["address"] = dev.address;
-
-            char hexBuf[8];
-            snprintf(hexBuf, sizeof(hexBuf), "0x%02X", dev.address);
-            obj["address_hex"] = String(hexBuf);
-
-            auto types = I2CScanner::sensorsForAddress(dev.address);
-            JsonArray typesArr = obj.createNestedArray("types");
-            for (const char* t : types) {
-                typesArr.add(t);
-            }
+            arr.add(dev.address);
         }
 
         String response;

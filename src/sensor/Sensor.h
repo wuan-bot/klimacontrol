@@ -161,8 +161,8 @@ namespace Sensor {
 
         virtual bool isConnected() = 0;
 
-        virtual TypeSpan provides() const { return {nullptr, 0}; }
-        virtual TypeSpan requires() const { return {nullptr, 0}; }
+        [[nodiscard]] virtual TypeSpan provides() const { return {nullptr, 0}; }
+        [[nodiscard]] virtual TypeSpan requires() const { return {nullptr, 0}; }
     };
 
     /**

@@ -565,7 +565,7 @@
     }
 
     // I2C Sensor Functions
-    let knownTypes = []; // [{type, addresses}]
+    let knownTypes = {}; // {type: [addresses]}
 
     function addrHex(addr) {
         return '0x' + addr.toString(16).toUpperCase().padStart(2, '0');
@@ -573,9 +573,9 @@
 
     function typesForAddress(addr) {
         const types = [];
-        knownTypes.forEach(kt => {
-            if (kt.addresses.includes(addr)) types.push(kt.type);
-        });
+        for (const [type, addresses] of Object.entries(knownTypes)) {
+            if (addresses.includes(addr)) types.push(type);
+        }
         return types;
     }
 
@@ -646,10 +646,7 @@
                 fetch('/api/sensors/registry')
             ]);
             const configData = await configRes.json();
-            const registryData = await registryRes.json();
-
-            if (registryData.sensors) knownTypes = registryData.sensors;
-
+            knownTypes = await registryRes.json();
             const devices = configData.devices || [];
             renderSensorList(devices);
         } catch (error) {
@@ -698,12 +695,12 @@
         try {
             const response = await fetch('/api/i2c/scan');
             const data = await response.json();
+            const addresses = data.devices || [];
 
-            if (data.devices.length === 0) {
+            if (addresses.length === 0) {
                 alert('No I2C devices found on the bus.');
             } else {
                 const list = document.getElementById('sensorList');
-                const scannedAddrs = new Set(data.devices.map(d => d.address));
 
                 // Build map of existing selections keyed by address
                 const existingSelections = {};
@@ -711,13 +708,14 @@
                     existingSelections[parseInt(s.dataset.address)] = s.value;
                 });
 
-                // Rebuild list with only scanned addresses, preserving selections
+                // Rebuild list with only scanned addresses that have known types
                 list.innerHTML = '';
-                data.devices.forEach(d => {
-                    if (!d.types || d.types.length === 0) return;
-                    const prev = existingSelections[d.address];
-                    const selected = prev && prev !== 'DISABLED' ? prev : d.types[0];
-                    list.appendChild(createSensorRow(d.address, selected));
+                addresses.forEach(addr => {
+                    const types = typesForAddress(addr);
+                    if (types.length === 0) return;
+                    const prev = existingSelections[addr];
+                    const selected = prev && prev !== 'DISABLED' ? prev : types[0];
+                    list.appendChild(createSensorRow(addr, selected));
                 });
 
                 showSensorButtons();

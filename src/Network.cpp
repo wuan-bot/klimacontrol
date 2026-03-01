@@ -60,7 +60,7 @@ void Network::configureMDNS() {
             instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_id);
         }
 
-        Serial.printf("mDNS instance name: '%s'", instanceName.c_str());
+        Serial.printf("mDNS instance name: '%s'\n", instanceName.c_str());
         MDNS.setInstanceName(instanceName.c_str());
 
         MDNS.addService("http", "tcp", 80);
@@ -125,20 +125,9 @@ void Network::startSTA(const char *ssid, const char *password) {
     // Reduce transmit power (8.5 dBm is sufficient for indoor range)
     WiFi.setTxPower(WIFI_POWER_8_5dBm);
 
-    // Enable automatic power management - CPU clocks down during idle (vTaskDelay)
-    // Requires CONFIG_PM_ENABLE in sdkconfig (not set in default Arduino framework)
-    esp_pm_config_esp32s2_t pm_config = {
-        .max_freq_mhz = 80,
-        .min_freq_mhz = 10,
-        .light_sleep_enable = true
-    };
-    esp_err_t pm_err = esp_pm_configure(&pm_config);
-
     Serial.println("WiFi Configuration:");
-    Serial.printf("  Power save: MAX_MODEM\n");
+    Serial.printf("  Power save: MIN_MODEM\n");
     Serial.printf("  TX Power: 8.5dBm\n");
-    Serial.printf("  PM: %s (CPU 10-80 MHz, light sleep)\n",
-        pm_err == ESP_OK ? "enabled" : (pm_err == ESP_ERR_NOT_SUPPORTED ? "not supported (needs CONFIG_PM_ENABLE)" : "failed"));
 
     WiFi.begin(ssid, password);
 
