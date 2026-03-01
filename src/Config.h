@@ -17,7 +17,7 @@ namespace Config {
     constexpr size_t JSON_DOC_MEDIUM = 512;
     constexpr size_t JSON_DOC_LARGE  = 1024;
     constexpr size_t JSON_DOC_XLARGE = 2048;
-    constexpr size_t JSON_DOC_OTA    = 8192;
+    constexpr size_t JSON_DOC_OTA    = 10240;
 
     /**
      * WiFi configuration structure
