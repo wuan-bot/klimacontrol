@@ -26,16 +26,16 @@ void SensorController::begin() {
     // Initialize all sensors
     for (auto &sensor : sensors) {
         if (sensor) {
-            Serial.printf("SensorController: Initializing sensor %s...\n", sensor->getType());
+            Serial.printf("SensorController: Initializing sensor %s...\r\n", sensor->getType());
             if (!sensor->begin()) {
-                Serial.printf("SensorController: Failed to initialize sensor %s\n", sensor->getType());
+                Serial.printf("SensorController: Failed to initialize sensor %s\r\n", sensor->getType());
             } else {
-                Serial.printf("SensorController: Successfully initialized sensor %s\n", sensor->getType());
+                Serial.printf("SensorController: Successfully initialized sensor %s\r\n", sensor->getType());
             }
         }
     }
 
-    Serial.printf("SensorController: Found %u sensors total\n", sensors.size());
+    Serial.printf("SensorController: Found %u sensors total\r\n", sensors.size());
 
     sortSensors();
 
@@ -79,7 +79,7 @@ void SensorController::sortSensors() {
             }
 
             if (satisfied) {
-                Serial.printf("SensorController: Read order [%u] %s\n",
+                Serial.printf("SensorController: Read order [%u] %s\r\n",
                     sorted.size(), sensors[i]->getType());
                 sorted.push_back(std::move(sensors[i]));
                 placed[i] = true;
@@ -92,7 +92,7 @@ void SensorController::sortSensors() {
     // Append any sensors with unmet dependencies (with warning)
     for (size_t i = 0; i < sensors.size(); ++i) {
         if (!placed[i]) {
-            Serial.printf("SensorController: WARNING: %s has unmet dependencies, appending last\n",
+            Serial.printf("SensorController: WARNING: %s has unmet dependencies, appending last\r\n",
                 sensors[i]->getType());
             sorted.push_back(std::move(sensors[i]));
         }
@@ -103,7 +103,7 @@ void SensorController::sortSensors() {
 
 void SensorController::readSensors() {
     // Serial.println("SensorController: Reading sensors...");
-    // Serial.printf("SensorController: Found %u sensors, checking connections...\n", sensors.size());
+    // Serial.printf("SensorController: Found %u sensors, checking connections...\r\n", sensors.size());
 
     std::vector<Sensor::Measurement> allMeasurements;
     bool anyValid = false;
@@ -115,7 +115,7 @@ void SensorController::readSensors() {
     for (auto &sensor : sensors) {
         if (sensor) {
             // if (sensor->isConnected()) {
-                // Serial.printf("SensorController: Reading from sensor %s...\n", sensor->getType());
+                // Serial.printf("SensorController: Reading from sensor %s...\r\n", sensor->getType());
                 uint32_t readStart = millis();
                 Sensor::SensorReading reading = sensor->read(readConfig, allMeasurements);
                 uint32_t readTime = millis() - readStart;
@@ -137,16 +137,16 @@ void SensorController::readSensors() {
                         allMeasurements.push_back(m);
                     }
 #ifdef DEBUG
-                    Serial.print("\n");
+                    Serial.print("\r\n");
 #endif
 
                     allMeasurements.push_back({Sensor::MeasurementType::Time, (int32_t)readTime, sensor->getType(), false});
                     anyValid = true;
                 } else {
-                    Serial.printf("SensorController: Sensor %s - invalid data\n", sensor->getType());
+                    Serial.printf("SensorController: Sensor %s - invalid data\r\n", sensor->getType());
                 }
             } else {
-                Serial.printf("SensorController: Sensor %s - not connected\n", sensor->getType());
+                Serial.printf("SensorController: Sensor %s - not connected\r\n", sensor->getType());
             }
         // }
     }
@@ -192,13 +192,13 @@ Sensor::Sensor *SensorController::getSensor(size_t index) {
 void SensorController::setTargetTemperature(float temperature) {
     // Clamp to reasonable range for room temperature control
     targetTemperature = std::max(10.0f, std::min(30.0f, temperature));
-    Serial.printf("SensorController: Target temperature set to %.1f°C\n", targetTemperature);
+    Serial.printf("SensorController: Target temperature set to %.1f°C\r\n", targetTemperature);
 }
 
 void SensorController::setControlEnabled(bool enabled) {
     if (controlEnabled != enabled) {
         controlEnabled = enabled;
-        Serial.printf("SensorController: Temperature control %s\n",
+        Serial.printf("SensorController: Temperature control %s\r\n",
                      enabled ? "enabled" : "disabled");
     }
 }
@@ -236,7 +236,7 @@ float SensorController::updateControl() {
     output = std::max(MinOutput, std::min(MaxOutput, output));
 
     if (dt > 0) {
-        Serial.printf("Control: T=%.1f°C (target=%.1f°C), output=%.2f, P=%.2f, I=%.2f, D=%.2f\n",
+        Serial.printf("Control: T=%.1f°C (target=%.1f°C), output=%.2f, P=%.2f, I=%.2f, D=%.2f\r\n",
                      currentTemp, targetTemperature, output, proportional, integral, derivative);
     }
 

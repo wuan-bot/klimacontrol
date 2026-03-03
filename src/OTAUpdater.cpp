@@ -20,7 +20,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     HTTPClient http;
     String apiUrl = String("https://api.github.com/repos/") + owner + "/" + repo + "/releases/latest";
 
-    Serial.printf("[OTA] Checking for updates: %s\n", apiUrl.c_str());
+    Serial.printf("[OTA] Checking for updates: %s\r\n", apiUrl.c_str());
 
     if (!http.begin(client, apiUrl)) {
         Serial.println("[OTA] HTTP initialization failed");
@@ -36,14 +36,14 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     int httpCode = http.GET();
 
     if (httpCode != HTTP_CODE_OK) {
-        Serial.printf("[OTA] HTTP GET failed: %s (free heap: %u bytes)\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
+        Serial.printf("[OTA] HTTP GET failed: %s (free heap: %u bytes)\r\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
         http.end();
         return false;
     }
 
     // Log memory before parsing
     uint32_t freeBefore = ESP.getFreeHeap();
-    Serial.printf("[OTA] Free heap before JSON parse: %u bytes\n", freeBefore);
+    Serial.printf("[OTA] Free heap before JSON parse: %u bytes\r\n", freeBefore);
 
     // Use JSON filter to only parse fields we need (saves memory)
     JsonDocument filter;
@@ -58,13 +58,13 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     DeserializationError error = deserializeJson(doc, http.getStream(), DeserializationOption::Filter(filter));
 
     uint32_t freeAfter = ESP.getFreeHeap();
-    Serial.printf("[OTA] Free heap after JSON parse: %u bytes (used: %d bytes)\n", freeAfter, freeBefore - freeAfter);
+    Serial.printf("[OTA] Free heap after JSON parse: %u bytes (used: %d bytes)\r\n", freeAfter, freeBefore - freeAfter);
 
     http.end();
 
     if (error) {
-        Serial.printf("[OTA] JSON parse error: %s\n", error.c_str());
-        Serial.printf("[OTA] Free heap: %u bytes, Required: ~8KB\n", ESP.getFreeHeap());
+        Serial.printf("[OTA] JSON parse error: %s\r\n", error.c_str());
+        Serial.printf("[OTA] Free heap: %u bytes, Required: ~8KB\r\n", ESP.getFreeHeap());
         return false;
     }
 
@@ -82,17 +82,17 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     JsonArray assets = doc["assets"];
     bool foundBin = false;
 
-    Serial.printf("[OTA] Found %d assets in release\n", assets.size());
+    Serial.printf("[OTA] Found %d assets in release\r\n", assets.size());
 
     for (JsonObject asset: assets) {
         auto assetName = asset["name"].as<String>();
-        Serial.printf("[OTA] Asset: %s\n", assetName.c_str());
+        Serial.printf("[OTA] Asset: %s\r\n", assetName.c_str());
 
         if (assetName.endsWith(".bin")) {
             info.downloadUrl = asset["browser_download_url"].as<String>();
             info.size = asset["size"].as<size_t>();
             foundBin = true;
-            Serial.printf("[OTA] Found firmware: %s (%zu bytes)\n", assetName.c_str(), info.size);
+            Serial.printf("[OTA] Found firmware: %s (%zu bytes)\r\n", assetName.c_str(), info.size);
             break;
         }
     }
@@ -105,8 +105,8 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
 
     info.isValid = true;
 
-    Serial.printf("[OTA] Release found: %s (%s)\n", info.name.c_str(), info.version.c_str());
-    Serial.printf("[OTA] Firmware size: %zu bytes\n", info.size);
+    Serial.printf("[OTA] Release found: %s (%s)\r\n", info.name.c_str(), info.version.c_str());
+    Serial.printf("[OTA] Firmware size: %zu bytes\r\n", info.size);
 
     return true;
 }
@@ -116,9 +116,9 @@ bool OTAUpdater::performUpdate(
     size_t expectedSize,
     const std::function<void(int, size_t)> &onProgress
 ) {
-    Serial.printf("[OTA] Starting firmware download\n");
-    Serial.printf("[OTA] URL: %s\n", downloadUrl.c_str());
-    Serial.printf("[OTA] Expected size: %zu bytes\n", expectedSize);
+    Serial.printf("[OTA] Starting firmware download\r\n");
+    Serial.printf("[OTA] URL: %s\r\n", downloadUrl.c_str());
+    Serial.printf("[OTA] Expected size: %zu bytes\r\n", expectedSize);
 
     // Reset watchdog before starting long operation
     esp_task_wdt_reset();
@@ -136,7 +136,7 @@ bool OTAUpdater::performUpdate(
         return false;
     }
 
-    Serial.printf("[OTA] Update target: %s (offset 0x%x)\n", nextPartition->label, nextPartition->address);
+    Serial.printf("[OTA] Update target: %s (offset 0x%x)\r\n", nextPartition->label, nextPartition->address);
 
     WiFiClientSecure client = createSecureClient();
 
@@ -155,7 +155,7 @@ bool OTAUpdater::performUpdate(
     // Handle redirects manually if needed
     if (httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
         String redirectUrl = http.getLocation();
-        Serial.printf("[OTA] Following redirect to: %s\n", redirectUrl.c_str());
+        Serial.printf("[OTA] Following redirect to: %s\r\n", redirectUrl.c_str());
         http.end();
 
         // Follow redirect
@@ -168,7 +168,7 @@ bool OTAUpdater::performUpdate(
     }
 
     if (httpCode != HTTP_CODE_OK) {
-        Serial.printf("[OTA] HTTP error: %s (free heap: %u bytes)\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
+        Serial.printf("[OTA] HTTP error: %s (free heap: %u bytes)\r\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
         http.end();
         return false;
     }
@@ -176,14 +176,14 @@ bool OTAUpdater::performUpdate(
     // Verify content size
     int contentSize = http.getSize();
     if (contentSize != expectedSize) {
-        Serial.printf("[OTA] Size mismatch! Expected: %zu, Got: %d\n", expectedSize, contentSize);
+        Serial.printf("[OTA] Size mismatch! Expected: %zu, Got: %d\r\n", expectedSize, contentSize);
         http.end();
         return false;
     }
 
     // Begin OTA write
     if (!Update.begin(expectedSize, U_FLASH)) {
-        Serial.printf("[OTA] Update.begin() failed: %s\n", Update.errorString());
+        Serial.printf("[OTA] Update.begin() failed: %s\r\n", Update.errorString());
         http.end();
         return false;
     }
@@ -210,8 +210,8 @@ bool OTAUpdater::performUpdate(
                 size_t bytesWritten = Update.write(buffer, bytesRead);
 
                 if (bytesWritten != bytesRead) {
-                    Serial.printf("[OTA] Flash write failed! Expected: %d, Written: %zu\n", bytesRead, bytesWritten);
-                    Serial.printf("[OTA] Update error: %s\n", Update.errorString());
+                    Serial.printf("[OTA] Flash write failed! Expected: %d, Written: %zu\r\n", bytesRead, bytesWritten);
+                    Serial.printf("[OTA] Update error: %s\r\n", Update.errorString());
                     Update.abort();
                     http.end();
                     return false;
@@ -234,7 +234,7 @@ bool OTAUpdater::performUpdate(
                     lastProgressLog = millis();
                 }
             } else if (bytesRead < 0) {
-                Serial.printf("[OTA] Stream read error: %d\n", bytesRead);
+                Serial.printf("[OTA] Stream read error: %d\r\n", bytesRead);
                 Update.abort();
                 http.end();
                 return false;
@@ -247,7 +247,7 @@ bool OTAUpdater::performUpdate(
             // Check for timeout (60 seconds of no data)
             if (millis() - lastDataReceived > 60000) {
                 Serial.println("[OTA] Download timeout! No data received for 60 seconds");
-                Serial.printf("[OTA] Downloaded: %zu/%zu bytes (%d%%)\n", totalRead, expectedSize,
+                Serial.printf("[OTA] Downloaded: %zu/%zu bytes (%d%%)\r\n", totalRead, expectedSize,
                               (totalRead * 100) / expectedSize);
                 Update.abort();
                 http.end();
@@ -259,14 +259,14 @@ bool OTAUpdater::performUpdate(
     // Finalize OTA
     if (!Update.end(false)) {
         // false = don't reboot
-        Serial.printf("[OTA] Update.end() failed: %s\n", Update.errorString());
+        Serial.printf("[OTA] Update.end() failed: %s\r\n", Update.errorString());
         http.end();
         return false;
     }
 
     http.end();
 
-    Serial.printf("[OTA] Download complete! %zu bytes flashed\n", totalRead);
+    Serial.printf("[OTA] Download complete! %zu bytes flashed\r\n", totalRead);
     Serial.println("[OTA] Firmware ready to boot. Call confirmBoot() after verifying it works.");
 
     return true;
@@ -278,7 +278,7 @@ bool OTAUpdater::confirmBoot() {
     esp_err_t err = esp_ota_mark_app_valid_cancel_rollback();
 
     if (err != ESP_OK) {
-        Serial.printf("[OTA] Boot confirmation failed: %s\n", esp_err_to_name(err));
+        Serial.printf("[OTA] Boot confirmation failed: %s\r\n", esp_err_to_name(err));
         return false;
     }
 
@@ -293,7 +293,7 @@ bool OTAUpdater::hasUnconfirmedUpdate() {
     esp_err_t err = esp_ota_get_state_partition(runningPartition, &state);
 
     if (err != ESP_OK) {
-        Serial.printf("[OTA] Failed to get partition state: %s\n", esp_err_to_name(err));
+        Serial.printf("[OTA] Failed to get partition state: %s\r\n", esp_err_to_name(err));
         return false;
     }
 
@@ -323,10 +323,10 @@ bool OTAUpdater::hasEnoughMemory() {
     uint32_t freeHeap, minFree;
     getMemoryInfo(freeHeap, minFree);
 
-    Serial.printf("[OTA] Memory check - Free: %u bytes, Min: %u bytes\n", freeHeap, minFree);
+    Serial.printf("[OTA] Memory check - Free: %u bytes, Min: %u bytes\r\n", freeHeap, minFree);
 
     if (freeHeap < MIN_FREE_HEAP) {
-        Serial.printf("[OTA] Insufficient free heap! Need: %d, Have: %u\n", MIN_FREE_HEAP, freeHeap);
+        Serial.printf("[OTA] Insufficient free heap! Need: %d, Have: %u\r\n", MIN_FREE_HEAP, freeHeap);
         return false;
     }
 

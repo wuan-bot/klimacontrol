@@ -83,13 +83,13 @@ void setup() {
                     } else if (strcmp(name, Sensor::BH1750Sensor::type()) == 0) {
                         sensorController.addSensor(std::make_unique<Sensor::BH1750Sensor>(addr));
                     } else {
-                        Serial.printf("Unknown sensor type: %s\n", name);
+                        Serial.printf("Unknown sensor type: %s\r\n", name);
                         token = strtok(nullptr, ",");
                         continue;
                     }
-                    Serial.printf("Sensor %s added at 0x%02X\n", name, addr);
+                    Serial.printf("Sensor %s added at 0x%02X\r\n", name, addr);
                 } catch (...) {
-                    Serial.printf("Error initializing %s sensor at 0x%02X\n", name, addr);
+                    Serial.printf("Error initializing %s sensor at 0x%02X\r\n", name, addr);
                 }
             }
             token = strtok(nullptr, ",");
@@ -111,7 +111,7 @@ void setup() {
     try {
         sensorMonitor.startTask();
     } catch (const std::exception &e) {
-        Serial.printf("Error starting sensor monitor task: %s\n", e.what());
+        Serial.printf("Error starting sensor monitor task: %s\r\n", e.what());
     } catch (...) {
         Serial.println("Unknown error starting sensor monitor task");
     }
@@ -119,7 +119,7 @@ void setup() {
     try {
         network.startTask();
     } catch (const std::exception &e) {
-        Serial.printf("Error starting network task: %s\n", e.what());
+        Serial.printf("Error starting network task: %s\r\n", e.what());
     } catch (...) {
         Serial.println("Unknown error starting network task");
     }

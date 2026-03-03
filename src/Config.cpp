@@ -11,7 +11,7 @@ namespace Config {
     void ConfigManager::requestRestart(uint32_t delayMs) {
         restartAt = millis() + delayMs;
         restartRequested = true;
-        Serial.printf("Config: Restart requested in %u ms\n", delayMs);
+        Serial.printf("Config: Restart requested in %u ms\r\n", delayMs);
     }
 
     void ConfigManager::checkRestart() {
@@ -264,7 +264,7 @@ namespace Config {
 
         prefs.end();
 
-        Serial.printf("TouchConfig: Loaded - enabled=%d, threshold=%u\n",
+        Serial.printf("TouchConfig: Loaded - enabled=%d, threshold=%u\r\n",
                       touchConfig.enabled, touchConfig.threshold);
 #endif
 
@@ -280,7 +280,7 @@ namespace Config {
 
         prefs.end();
 
-        Serial.printf("TouchConfig: Saved - enabled=%d, threshold=%u\n",
+        Serial.printf("TouchConfig: Saved - enabled=%d, threshold=%u\r\n",
                       config.enabled, config.threshold);
 #endif
     }
@@ -297,7 +297,7 @@ namespace Config {
 
         prefs.end();
 
-        Serial.printf("SensorConfig: Loaded assignments='%s'\n", sensorConfig.assignments);
+        Serial.printf("SensorConfig: Loaded assignments='%s'\r\n", sensorConfig.assignments);
 #endif
 
         return sensorConfig;
@@ -311,7 +311,7 @@ namespace Config {
 
         prefs.end();
 
-        Serial.printf("SensorConfig: Saved assignments='%s'\n", config.assignments);
+        Serial.printf("SensorConfig: Saved assignments='%s'\r\n", config.assignments);
 #endif
     }
 

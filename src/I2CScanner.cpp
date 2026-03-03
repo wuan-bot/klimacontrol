@@ -67,12 +67,12 @@ namespace I2CScanner {
             if (error == 0) {
                 const char* type = identifyAddress(addr);
                 devices.push_back({addr, type});
-                Serial.printf("I2CScanner: Found device at 0x%02X (%s)\n",
+                Serial.printf("I2CScanner: Found device at 0x%02X (%s)\r\n",
                               addr, type ? type : "unknown");
             }
         }
 
-        Serial.printf("I2CScanner: Scan complete, found %u devices\n", devices.size());
+        Serial.printf("I2CScanner: Scan complete, found %u devices\r\n", devices.size());
 #endif
 
         return devices;

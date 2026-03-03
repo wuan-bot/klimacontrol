@@ -60,7 +60,7 @@ void Network::configureMDNS() {
             instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_id);
         }
 
-        Serial.printf("mDNS instance name: '%s'\n", instanceName.c_str());
+        Serial.printf("mDNS instance name: '%s'\r\n", instanceName.c_str());
         MDNS.setInstanceName(instanceName.c_str());
 
         MDNS.addService("http", "tcp", 80);
@@ -123,7 +123,7 @@ void Network::startSTA(const char *ssid, const char *password) {
     WiFi.setSleep(WIFI_PS_NONE);
 
     Serial.println("WiFi Configuration:");
-    Serial.printf("  Power save: NONE\n");
+    Serial.printf("  Power save: NONE\r\n");
 
     WiFi.begin(ssid, password);
 
@@ -146,17 +146,17 @@ void Network::startSTA(const char *ssid, const char *password) {
         Serial.println(WiFi.localIP());
 
         // Print detailed WiFi diagnostics
-        Serial.println("\nWiFi Diagnostics:");
-        Serial.printf("  SSID: %s\n", WiFi.SSID().c_str());
-        Serial.printf("  BSSID: %s\n", WiFi.BSSIDstr().c_str());
-        Serial.printf("  Channel: %d\n", WiFi.channel());
-        Serial.printf("  RSSI: %d dBm\n", WiFi.RSSI());
-        Serial.printf("  MAC: %s\n", WiFi.macAddress().c_str());
-        Serial.printf("  Gateway: %s\n", WiFi.gatewayIP().toString().c_str());
-        Serial.printf("  DNS: %s\n", WiFi.dnsIP().toString().c_str());
-        Serial.printf("  TX Power: %d\n", WiFi.getTxPower());
-        Serial.printf("  Sleep Mode: %d (0=NONE)\n", WiFi.getSleep());
-        Serial.printf("  Auto Reconnect: %d\n", WiFi.getAutoReconnect());
+        Serial.println("\r\nWiFi Diagnostics:");
+        Serial.printf("  SSID: %s\r\n", WiFi.SSID().c_str());
+        Serial.printf("  BSSID: %s\r\n", WiFi.BSSIDstr().c_str());
+        Serial.printf("  Channel: %d\r\n", WiFi.channel());
+        Serial.printf("  RSSI: %d dBm\r\n", WiFi.RSSI());
+        Serial.printf("  MAC: %s\r\n", WiFi.macAddress().c_str());
+        Serial.printf("  Gateway: %s\r\n", WiFi.gatewayIP().toString().c_str());
+        Serial.printf("  DNS: %s\r\n", WiFi.dnsIP().toString().c_str());
+        Serial.printf("  TX Power: %d\r\n", WiFi.getTxPower());
+        Serial.printf("  Sleep Mode: %d (0=NONE)\r\n", WiFi.getSleep());
+        Serial.printf("  Auto Reconnect: %d\r\n", WiFi.getAutoReconnect());
         Serial.println();
 
         configureMDNS();
@@ -188,7 +188,7 @@ void Network::startSTA(const char *ssid, const char *password) {
         Config::MqttConfig mqttConfig = config.loadMqttConfig();
         mqttClient->begin(mqttConfig);
     } else {
-        Serial.println("\nConnection failed");
+        Serial.println("\r\nConnection failed");
     }
 #endif
 }
@@ -296,7 +296,7 @@ void Network::configureUsingAPMode() {
     webServer->begin();
 
     Serial.println("Webserver started - system ready");
-    Serial.printf("Free heap: %u bytes\n", ESP.getFreeHeap());
+    Serial.printf("Free heap: %u bytes\r\n", ESP.getFreeHeap());
 
     // Main loop - NTP updates and touch control
     auto lastNtpUpdate = ntpClient.getEpochTime();
@@ -321,7 +321,7 @@ void Network::configureUsingAPMode() {
 
             auto wl_status = WiFi.status();
             if (now - lastCheck > 1100) {
-                Serial.printf("WiFi status: %d delayed %lu\n", wl_status, now - lastCheck);
+                Serial.printf("WiFi status: %d delayed %lu\r\n", wl_status, now - lastCheck);
             }
             lastCheck = now;
 
@@ -337,7 +337,7 @@ void Network::configureUsingAPMode() {
                 }
 
                 if (WiFi.status() == WL_CONNECTED) {
-                    Serial.printf("WiFi reconnected (%d attempts)\n", attempts);
+                    Serial.printf("WiFi reconnected (%d attempts)\r\n", attempts);
                 }
             }
 

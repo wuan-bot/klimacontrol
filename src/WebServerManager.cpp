@@ -431,7 +431,7 @@ void WebServerManager::setupAPIRoutes() {
                       wifiConfig.configured = true;
                       config.saveWiFiConfig(wifiConfig);
 
-                      Serial.printf("WiFi credentials updated: SSID=%s\n", wifiConfig.ssid);
+                      Serial.printf("WiFi credentials updated: SSID=%s\r\n", wifiConfig.ssid);
 
                       // Send success response and restart
                       request->send(200, CONTENT_TYPE_JSON,
@@ -471,7 +471,7 @@ void WebServerManager::setupAPIRoutes() {
                       deviceConfig.device_name[sizeof(deviceConfig.device_name) - 1] = '\0';
                       config.saveDeviceConfig(deviceConfig);
 
-                      Serial.printf("Device name updated: %s\n", deviceConfig.device_name);
+                      Serial.printf("Device name updated: %s\r\n", deviceConfig.device_name);
 
                       // Send success response (no restart needed)
                       request->send(200, CONTENT_TYPE_JSON, "{\"success\":true}");
@@ -506,7 +506,7 @@ void WebServerManager::setupAPIRoutes() {
                       deviceConfig.elevation = elevation;
                       config.saveDeviceConfig(deviceConfig);
 
-                      Serial.printf("Elevation updated: %.0f m\n", elevation);
+                      Serial.printf("Elevation updated: %.0f m\r\n", elevation);
 
                       request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
                   }
@@ -1063,11 +1063,11 @@ void WebServerManager::setupAPIRoutes() {
                           return;
                       }
 
-                      Serial.printf("[WebServer] Starting OTA: %s (%zu bytes)\n", downloadUrl.c_str(), size);
+                      Serial.printf("[WebServer] Starting OTA: %s (%zu bytes)\r\n", downloadUrl.c_str(), size);
 
                       // Perform OTA update (this will block)
                       bool success = OTAUpdater::performUpdate(downloadUrl, size, [](int percent, size_t bytes) {
-                          Serial.printf("[OTA] Progress: %d%% (%zu bytes)\n", percent, bytes);
+                          Serial.printf("[OTA] Progress: %d%% (%zu bytes)\r\n", percent, bytes);
                       });
 
                       if (success) {
@@ -1337,7 +1337,7 @@ void OperationalWebServerManager::setupRoutes() {
 
     // Add 404 handler
     server.onNotFound([](AsyncWebServerRequest *request) {
-        Serial.printf("[HTTP] 404 Not Found: %s\n", request->url().c_str());
+        Serial.printf("[HTTP] 404 Not Found: %s\r\n", request->url().c_str());
         request->send(404, "text/plain", "Not found");
     });
 #endif
