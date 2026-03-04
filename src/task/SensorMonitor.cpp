@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <esp_task_wdt.h>
 #endif
 
 namespace Task {
@@ -18,7 +19,7 @@ namespace Task {
         xTaskCreate(
             taskWrapper, // Task Function
             "SensorMonitor", // Task Name
-            12000, // Stack Size (12KB)
+            16000, // Stack Size (16KB)
             this, // Parameters
             1, // Priority (same as LED task)
             &taskHandle // Task Handle
@@ -34,10 +35,14 @@ namespace Task {
     }
     
     void SensorMonitor::task() {
+        esp_task_wdt_add(NULL);
+
         unsigned long lastDiagnostics = millis();
         static constexpr unsigned long DIAGNOSTICS_INTERVAL_MS = 300000; // 5 minutes
 
         while (true) {
+            esp_task_wdt_reset();
+
             auto startTime = millis();
             controller.readSensors();
 

@@ -24,6 +24,10 @@
 #include "task/SensorMonitor.h"
 #include "StatusLed.h"
 
+#ifdef ARDUINO
+#include <esp_task_wdt.h>
+#endif
+
 TaskHandle_t networkTaskHandle = nullptr;
 
 Config::ConfigManager config;
@@ -124,6 +128,10 @@ void setup() {
     } catch (...) {
         Serial.println("Unknown error starting network task");
     }
+
+    // Configure task watchdog timer (30s timeout, panic on trigger)
+    esp_task_wdt_init(30, true);
+    Serial.println("Task watchdog configured (30s timeout)");
 }
 
 void loop() {

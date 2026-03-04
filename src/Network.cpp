@@ -14,6 +14,7 @@
 
 #ifdef ARDUINO
 #include <esp_pm.h>
+#include <esp_task_wdt.h>
 #endif
 
 #ifdef ARDUINO
@@ -219,6 +220,8 @@ void Network::configureUsingAPMode() {
 
 [[noreturn]] void Network::task() {
 #ifdef ARDUINO
+    esp_task_wdt_add(NULL);
+
     Serial.println("Network task started");
 
     // Initialize status LED early (works without WiFi) - uses built-in NeoPixel
@@ -301,12 +304,17 @@ void Network::configureUsingAPMode() {
     unsigned long lastDiagnostics = millis();
     unsigned long lastNtpRetry = 0; // millis() of last NTP retry when unsynced
     uint8_t wifiReconnectFailures = 0;
+    bool wifiReconnecting = false;
+    unsigned long wifiReconnectStart = 0;
     static constexpr uint8_t MAX_WIFI_RECONNECT_FAILURES = 10;
+    static constexpr unsigned long WIFI_RECONNECT_TIMEOUT_MS = 30000;
     static constexpr uint32_t MIN_FREE_HEAP_BYTES = 16384; // 16 KB
     static constexpr unsigned long DIAGNOSTICS_INTERVAL_MS = 300000; // 5 minutes
     static constexpr unsigned long NTP_UNSYNCED_RETRY_MS = 60000; // 1 minute
     while (true) {
         vTaskDelay(500 / portTICK_PERIOD_MS);
+
+        esp_task_wdt_reset();
 
         unsigned long now = millis();
 
@@ -335,24 +343,18 @@ void Network::configureUsingAPMode() {
             }
             lastCheck = now;
 
-            // Check WiFi connection
+            // Non-blocking WiFi reconnection
             if (wl_status != WL_CONNECTED) {
-                Serial.println("WiFi disconnected - reconnecting ...");
-                WiFi.reconnect();
-
-                int attempts = 0;
-                while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-                    vTaskDelay(500 / portTICK_PERIOD_MS);
-                    attempts++;
-                }
-
-                if (WiFi.status() == WL_CONNECTED) {
-                    Serial.printf("WiFi reconnected (%d attempts)\r\n", attempts);
-                    wifiReconnectFailures = 0;
-                } else {
+                if (!wifiReconnecting) {
+                    Serial.println("WiFi disconnected - reconnecting ...");
+                    WiFi.reconnect();
+                    wifiReconnecting = true;
+                    wifiReconnectStart = now;
+                } else if (now - wifiReconnectStart >= WIFI_RECONNECT_TIMEOUT_MS) {
                     wifiReconnectFailures++;
-                    Serial.printf("WiFi reconnect failed (%u/%u)\r\n",
+                    Serial.printf("WiFi reconnect timed out (%u/%u)\r\n",
                                   wifiReconnectFailures, MAX_WIFI_RECONNECT_FAILURES);
+                    wifiReconnecting = false;
                     if (wifiReconnectFailures >= MAX_WIFI_RECONNECT_FAILURES) {
                         Serial.println("Too many WiFi reconnect failures - restarting...");
                         vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -360,6 +362,10 @@ void Network::configureUsingAPMode() {
                     }
                 }
             } else {
+                if (wifiReconnecting) {
+                    Serial.printf("WiFi reconnected after %lu ms\r\n", now - wifiReconnectStart);
+                    wifiReconnecting = false;
+                }
                 wifiReconnectFailures = 0;
             }
 
@@ -463,7 +469,7 @@ void Network::startTask() {
     xTaskCreate(
         taskWrapper, // Task Function
         "Network", // Task Name
-        14000, // Stack Size
+        18000, // Stack Size
         this, // Parameters
         1, // Priority
         &taskHandle // Task Handle

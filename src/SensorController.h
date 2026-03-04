@@ -6,6 +6,10 @@
 #include "sensor/Sensor.h"
 #include "Config.h"
 
+#ifdef ARDUINO
+#include <freertos/semphr.h>
+#endif
+
 namespace Sensor {
     class Sensor;
 }
@@ -20,6 +24,10 @@ private:
     std::vector<Sensor::Measurement> currentMeasurements;
     uint32_t lastReadingTimestamp;
     bool dataValid;
+
+#ifdef ARDUINO
+    mutable SemaphoreHandle_t dataMutex;
+#endif
 
     void sortSensors();
 
@@ -42,7 +50,7 @@ public:
     /**
      * Get all current measurements
      */
-    const std::vector<Sensor::Measurement> &getMeasurements() const { return currentMeasurements; }
+    std::vector<Sensor::Measurement> getMeasurements() const;
 
     /**
      * Get current temperature (first temperature measurement found)
@@ -67,12 +75,12 @@ public:
     /**
      * Get timestamp of last reading
      */
-    uint32_t getLastReadingTimestamp() const { return lastReadingTimestamp; }
+    uint32_t getLastReadingTimestamp() const;
 
     /**
      * Whether current data is valid
      */
-    bool isDataValid() const { return dataValid; }
+    bool isDataValid() const;
 
     size_t getSensorCount() const { return sensors.size(); }
     Sensor::Sensor *getSensor(size_t index);
