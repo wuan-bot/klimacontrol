@@ -45,8 +45,6 @@ static const char* JSON_RESPONSE_ERROR_QUEUE_FULL = R"({"success":false,"error":
 // API Paths
 static const char* API_PATH_WIFI = "/api/wifi";
 static const char* API_PATH_STATUS = "/api/status";
-static const char* API_PATH_LAYOUT = "/api/layout";
-static const char* API_PATH_TIMERS = "/api/timers";
 static const char* API_PATH_RESTART = "/api/restart";
 static const char* API_PATH_RESET = "/api/reset";
 static const char* API_PATH_OTA_CHECK = "/api/ota/check";
@@ -843,11 +841,6 @@ void WebServerManager::setupAPIRoutes() {
     // GET /settings - Settings page
     server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request) {
         sendGzippedResponse(request, CONTENT_TYPE_HTML, SETTINGS_GZ, SETTINGS_GZ_LEN);
-    });
-
-    // GET /timers - Timers page
-    server.on("/timers", HTTP_GET, [](AsyncWebServerRequest *request) {
-        sendGzippedResponse(request, CONTENT_TYPE_HTML, TIMERS_GZ, TIMERS_GZ_LEN);
     });
 #endif
 }
