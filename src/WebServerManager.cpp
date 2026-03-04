@@ -21,7 +21,6 @@
 #include "generated/control_gz.h"
 #include "generated/about_gz.h"
 #include "generated/settings_gz.h"
-#include "generated/timers_gz.h"
 #include "generated/common_gz.h"
 #include "generated/favicon_gz.h"
 
