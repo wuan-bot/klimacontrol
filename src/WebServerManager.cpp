@@ -50,6 +50,7 @@ static const char* API_PATH_RESTART = "/api/restart";
 static const char* API_PATH_RESET = "/api/reset";
 static const char* API_PATH_OTA_CHECK = "/api/ota/check";
 static const char* API_PATH_OTA_UPDATE = "/api/ota/update";
+
 #endif
 
 // Helper functions to send gzipped responses
@@ -664,8 +665,6 @@ void WebServerManager::setupAPIRoutes() {
 
         FirmwareInfo info;
         bool releaseFound = OTAUpdater::checkForUpdate(OTA_GITHUB_OWNER, OTA_GITHUB_REPO, info);
-
-        // Only report update available if release found AND version is different
         bool updateAvailable = releaseFound && (info.version != FIRMWARE_VERSION);
 
         if (releaseFound) {
