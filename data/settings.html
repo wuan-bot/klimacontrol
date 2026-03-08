@@ -133,6 +133,8 @@
 
             <button class="btn btn-primary" onclick="checkForUpdates()" id="checkUpdateBtn">Check for Updates</button>
 
+            <div id="checkResult" style="display: none; margin-top: 15px;"></div>
+
             <div id="updateAvailable" style="display: none; margin-top: 15px;">
                 <div class="success-box">
                     <strong>Update Available!</strong><br>
@@ -332,8 +334,11 @@
 
     async function checkForUpdates() {
         const btn = document.getElementById('checkUpdateBtn');
+        const resultDiv = document.getElementById('checkResult');
         btn.disabled = true;
         btn.textContent = 'Checking...';
+        resultDiv.style.display = 'none';
+        document.getElementById('updateAvailable').style.display = 'none';
 
         try {
             const response = await fetch('/api/ota/check');
@@ -345,15 +350,26 @@
                 document.getElementById('updateSize').textContent = formatBytes(data.size_bytes);
                 document.getElementById('releaseNotes').textContent = data.release_notes || 'No release notes available.';
                 document.getElementById('updateAvailable').style.display = 'block';
+                resultDiv.style.display = 'none';
                 btn.textContent = 'Update Available!';
+            } else if (data.error) {
+                resultDiv.className = 'warning-box';
+                resultDiv.innerHTML = '<strong>Update check failed</strong><br>' + data.error;
+                resultDiv.style.display = 'block';
+                btn.textContent = 'Check for Updates';
+                btn.disabled = false;
             } else {
-                alert('You are running the latest version: ' + data.current_version);
+                resultDiv.className = 'info-box';
+                resultDiv.innerHTML = 'Up to date &mdash; latest release is <strong>' + data.latest_version + '</strong>';
+                resultDiv.style.display = 'block';
                 btn.textContent = 'Check for Updates';
                 btn.disabled = false;
             }
         } catch (error) {
             console.error('Failed to check for updates:', error);
-            alert('Failed to check for updates. Please ensure you have internet connection.');
+            resultDiv.className = 'warning-box';
+            resultDiv.innerHTML = '<strong>Update check failed</strong><br>Could not reach the device. Check your connection.';
+            resultDiv.style.display = 'block';
             btn.textContent = 'Check for Updates';
             btn.disabled = false;
         }

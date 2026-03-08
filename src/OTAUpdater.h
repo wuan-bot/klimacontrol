@@ -27,6 +27,7 @@ struct FirmwareInfo {
     size_t size; // File size in bytes
     String releaseNotes; // Release notes body
     bool isValid; // Whether the structure contains valid data
+    String errorMessage; // Error description when check fails
 };
 
 /**

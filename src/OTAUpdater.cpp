@@ -24,6 +24,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
 
     if (!http.begin(client, apiUrl)) {
         Serial.println("[OTA] HTTP initialization failed");
+        info.errorMessage = "HTTP initialization failed";
         return false;
     }
 
@@ -37,6 +38,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
 
     if (httpCode != HTTP_CODE_OK) {
         Serial.printf("[OTA] HTTP GET failed: %s (free heap: %u bytes)\r\n", HTTPClient::errorToString(httpCode).c_str(), ESP.getFreeHeap());
+        info.errorMessage = "HTTP error " + String(httpCode) + ": " + HTTPClient::errorToString(httpCode);
         http.end();
         return false;
     }
@@ -65,6 +67,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     if (error) {
         Serial.printf("[OTA] JSON parse error: %s\r\n", error.c_str());
         Serial.printf("[OTA] Free heap: %u bytes, Required: ~8KB\r\n", ESP.getFreeHeap());
+        info.errorMessage = String("JSON parse error: ") + error.c_str();
         return false;
     }
 
@@ -75,6 +78,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
 
     if (info.version.isEmpty()) {
         Serial.println("[OTA] No tag_name in release");
+        info.errorMessage = "No tag_name in release response";
         return false;
     }
 
@@ -100,6 +104,7 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
     if (!foundBin) {
         Serial.println("[OTA] No .bin file found in release assets");
         Serial.println("[OTA] Make sure the GitHub release has a firmware.bin file attached");
+        info.errorMessage = "No .bin file found in release assets";
         return false;
     }
 

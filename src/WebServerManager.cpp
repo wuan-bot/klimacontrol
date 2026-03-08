@@ -679,7 +679,7 @@ void WebServerManager::setupAPIRoutes() {
         } else {
             doc["update_available"] = false;
             doc["current_version"] = FIRMWARE_VERSION;
-            doc["message"] = "No update available or failed to check";
+            doc["error"] = info.errorMessage.isEmpty() ? "Failed to check for updates" : info.errorMessage;
         }
 
         String response;
