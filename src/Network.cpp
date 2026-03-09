@@ -10,6 +10,7 @@
 #include "Network.h"
 #include "Config.h"
 #include "DeviceId.h"
+#include "OTAUpdater.h"
 #include "WebServerManager.h"
 
 #ifdef ARDUINO
@@ -320,8 +321,9 @@ void Network::configureUsingAPMode() {
         // }
 
         // Low heap check - restart cleanly before an OOM crash
+        // Skip during OTA: TLS buffers temporarily consume most internal SRAM
         uint32_t freeHeap = ESP.getFreeHeap();
-        if (freeHeap < MIN_FREE_HEAP_BYTES) {
+        if (freeHeap < MIN_FREE_HEAP_BYTES && !OTAUpdater::isUpdateInProgress()) {
             Serial.printf("CRITICAL: Low heap %u bytes - restarting...\r\n", freeHeap);
             vTaskDelay(500 / portTICK_PERIOD_MS);
             ESP.restart();

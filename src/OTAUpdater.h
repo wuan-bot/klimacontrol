@@ -51,8 +51,10 @@ public:
     static bool getRunningPartitionInfo(String &label, uint32_t &address);
     static void getMemoryInfo(uint32_t &freeHeap, uint32_t &minFreeHeap);
     static bool hasEnoughMemory();
+    static bool isUpdateInProgress() { return updateInProgress; }
 
 private:
+    static inline bool updateInProgress = false;
     static constexpr int TIMEOUT_MS = 30000;
     static constexpr int CHUNK_SIZE = 4096;
     static constexpr int MIN_FREE_HEAP = 65536;

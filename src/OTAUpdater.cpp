@@ -167,22 +167,40 @@ bool OTAUpdater::performUpdate(
 ) {
     Serial.printf("[OTA] Starting firmware download\r\n");
     Serial.printf("[OTA] URL: %s\r\n", downloadUrl.c_str());
-    Serial.printf("[OTA] Expected size: %zu bytes\r\n", expectedSize);
+    Serial.printf("[OTA] **** Expected size: %zu bytes\r\n", expectedSize);
 
-    esp_task_wdt_reset();
+    updateInProgress = true;
 
-    Serial.printf("[OTA] WDT reset done\r\n");
+    // ESP32-S2 is single-core: heavy TLS/network I/O can starve other tasks,
+    // preventing them from resetting the watchdog. Disable WDT for the duration
+    // of the update and re-enable it afterwards.
+    Serial.println("[OTA] Disabling task watchdog for update");
+    delay(500);
+    esp_task_wdt_deinit();
+    delay(500);
+    Serial.println("[OTA] Task watchdog disabled for update");
+
+    auto restoreWdt = []() {
+        updateInProgress = false;
+        esp_task_wdt_init(30, true);
+        Serial.println("[OTA] Task watchdog re-enabled");
+    };
+
+    delay(500);
 
     if (!hasEnoughMemory()) {
         Serial.println("[OTA] Insufficient memory for OTA");
+        restoreWdt();
         return false;
     }
 
-    Serial.printf("[OTA] has enough memory done\r\n");
+    delay(500);
+
 
     const esp_partition_t *nextPartition = esp_ota_get_next_update_partition(nullptr);
     if (nextPartition == nullptr) {
         Serial.println("[OTA] No OTA partition available");
+        restoreWdt();
         return false;
     }
 
@@ -193,27 +211,53 @@ bool OTAUpdater::performUpdate(
     config.timeout_ms = TIMEOUT_MS;
     config.crt_bundle_attach = esp_crt_bundle_attach;
     config.buffer_size = CHUNK_SIZE;
+    config.buffer_size_tx = 1024;  // GitHub CDN redirect URLs exceed the 512-byte default
 
     esp_http_client_handle_t client = esp_http_client_init(&config);
     if (client == nullptr) {
         Serial.println("[OTA] HTTP client init failed");
+        restoreWdt();
         return false;
     }
 
-    esp_err_t err = esp_http_client_open(client, 0);
-    if (err != ESP_OK) {
-        Serial.printf("[OTA] HTTP open failed: %s\r\n", esp_err_to_name(err));
-        esp_http_client_cleanup(client);
-        return false;
-    }
+    // GitHub's browser_download_url returns 302 redirects to a CDN.
+    // The esp_http_client streaming API (open/read) doesn't follow redirects
+    // automatically, so we handle them manually.
+    int statusCode = 0;
+    int contentLength = 0;
+    for (int redirects = 0; redirects < 5; redirects++) {
+        esp_err_t err = esp_http_client_open(client, 0);
+        if (err != ESP_OK) {
+            Serial.printf("[OTA] HTTP open failed: %s\r\n", esp_err_to_name(err));
+            esp_http_client_cleanup(client);
+            restoreWdt();
+            return false;
+        }
 
-    int contentLength = esp_http_client_fetch_headers(client);
-    int statusCode = esp_http_client_get_status_code(client);
+        contentLength = esp_http_client_fetch_headers(client);
+        statusCode = esp_http_client_get_status_code(client);
+        Serial.printf("[OTA] HTTP status: %d\r\n", statusCode);
+
+        if (statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308) {
+            esp_http_client_close(client);
+            esp_err_t redir_err = esp_http_client_set_redirection(client);
+            if (redir_err != ESP_OK) {
+                Serial.printf("[OTA] Redirect failed: %s\r\n", esp_err_to_name(redir_err));
+                esp_http_client_cleanup(client);
+                restoreWdt();
+                return false;
+            }
+            Serial.println("[OTA] Following redirect...");
+            continue;
+        }
+        break;
+    }
 
     if (statusCode != 200) {
-        Serial.printf("[OTA] HTTP status: %d\r\n", statusCode);
+        Serial.printf("[OTA] Unexpected HTTP status: %d\r\n", statusCode);
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
+        restoreWdt();
         return false;
     }
 
@@ -221,6 +265,7 @@ bool OTAUpdater::performUpdate(
         Serial.printf("[OTA] Size mismatch! Expected: %zu, Got: %d\r\n", expectedSize, contentLength);
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
+        restoreWdt();
         return false;
     }
 
@@ -228,6 +273,7 @@ bool OTAUpdater::performUpdate(
         Serial.printf("[OTA] Update.begin() failed: %s\r\n", Update.errorString());
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
+        restoreWdt();
         return false;
     }
 
@@ -250,7 +296,6 @@ bool OTAUpdater::performUpdate(
                 break;
             }
             totalRead += bytesWritten;
-            esp_task_wdt_reset();
             vTaskDelay(1);
 
             if (millis() - lastProgressLog > 1000) {
@@ -275,6 +320,7 @@ bool OTAUpdater::performUpdate(
         Update.abort();
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
+        restoreWdt();
         return false;
     }
 
@@ -282,6 +328,7 @@ bool OTAUpdater::performUpdate(
         Serial.printf("[OTA] Update.end() failed: %s\r\n", Update.errorString());
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
+        restoreWdt();
         return false;
     }
 
@@ -289,6 +336,7 @@ bool OTAUpdater::performUpdate(
     esp_http_client_cleanup(client);
 
     Serial.printf("[OTA] Download complete! %zu bytes flashed\r\n", totalRead);
+    restoreWdt();
     return true;
 }
 
