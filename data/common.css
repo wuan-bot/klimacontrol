@@ -552,48 +552,6 @@ input[type="color"] {
     font-size: 13px;
 }
 
-/* Timer card */
-.timer-card {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    border-left: 4px solid var(--timer-color, #667eea);
-}
-
-.timer-card-body {
-    flex: 1;
-}
-
-.timer-card-header {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 4px;
-}
-
-.timer-type-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-.timer-time {
-    font-size: 28px;
-    font-weight: 600;
-    font-family: monospace;
-    letter-spacing: 2px;
-    color: #333;
-}
-
-.timer-action {
-    font-size: 13px;
-    color: #666;
-}
-
 /* Device info subtitle */
 .device-subtitle {
     font-size: 11px;
