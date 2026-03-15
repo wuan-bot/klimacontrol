@@ -122,10 +122,15 @@ void Network::startSTA(const char *ssid, const char *password) {
     WiFi.mode(WIFI_STA);
 
     // Disable WiFi power save for best reception (matches CircuitPython default)
-    WiFi.setSleep(WIFI_PS_NONE);
+    WiFi.setSleep(WIFI_PS_MIN_MODEM);
+
+    // Use a moderate TX power sufficient for typical indoor distances (< 30 m).
+    WiFi.setTxPower(WIFI_POWER_13dBm);
 
     Serial.println("WiFi Configuration:");
-    Serial.printf("  Power save: NONE\r\n");
+    Serial.printf("  Power save: MIN_MODEM\r\n");
+    Serial.printf("  TX Power: %d (raw wifi_power_t)\r\n", WiFi.getTxPower());
+    Serial.printf("  Sleep Mode: %d (1=MIN_MODEM)\r\n", WiFi.getSleep());
 
     WiFi.begin(ssid, password);
 
