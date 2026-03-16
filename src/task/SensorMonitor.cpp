@@ -21,7 +21,7 @@ namespace Task {
             "SensorMonitor", // Task Name
             16000, // Stack Size (16KB)
             this, // Parameters
-            1, // Priority (same as LED task)
+            1, // Priority (same as Network task)
             &taskHandle // Task Handle
         );
 #endif

@@ -122,7 +122,7 @@ void Network::startSTA(const char *ssid, const char *password) {
     WiFi.mode(WIFI_STA);
 
     // Disable WiFi power save for best reception (matches CircuitPython default)
-    WiFi.setSleep(WIFI_PS_MIN_MODEM);
+    WiFi.setSleep(WIFI_PS_MAX_MODEM);
 
     // Use a moderate TX power sufficient for typical indoor distances (< 30 m).
     WiFi.setTxPower(WIFI_POWER_13dBm);
