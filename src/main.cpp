@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #ifdef ARDUINO
+#include "esp_pm.h"
 #include <Wire.h>
 #endif
 
@@ -58,13 +59,13 @@ void setup() {
         strncpy(buf, sensorConfig.assignments, sizeof(buf));
         buf[sizeof(buf) - 1] = '\0';
 
-        char* token = strtok(buf, ",");
+        char *token = strtok(buf, ",");
         while (token) {
-            char* eq = strchr(token, '=');
+            char *eq = strchr(token, '=');
             if (eq) {
                 *eq = '\0';
-                uint8_t addr = (uint8_t)strtoul(token, nullptr, 10);
-                const char* name = eq + 1;
+                uint8_t addr = (uint8_t) strtoul(token, nullptr, 10);
+                const char *name = eq + 1;
 
                 try {
                     if (strcmp(name, Sensor::SHT4x::type()) == 0) {
@@ -108,10 +109,19 @@ void setup() {
 
     // Initialize sensor controller
     sensorController.begin();
-    
+
     // Apply sensor configuration from the already loaded deviceConfig
     sensorController.setTargetTemperature(deviceConfig.target_temperature);
     sensorController.setControlEnabled(deviceConfig.temperature_control_enabled);
+
+#ifdef ARDUINO
+    esp_pm_config_esp32s2_t pm_config = {
+        .max_freq_mhz = 80,
+        .min_freq_mhz = 10,
+        .light_sleep_enable = true
+    };
+    esp_pm_configure(&pm_config);
+#endif
 
     try {
         sensorMonitor.startTask();
