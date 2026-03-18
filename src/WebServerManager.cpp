@@ -293,6 +293,8 @@ void WebServerManager::setupAPIRoutes() {
                 auto sensorObj = sensors.add<JsonObject>();
                 sensorObj["type"] = sensor->getType();
                 sensorObj["connected"] = sensor->isConnected();
+                sensorObj["status"] = Sensor::sensorStatusLabel(sensor->getStatus());
+                sensorObj["consecutive_failures"] = sensor->getConsecutiveReadFailures();
             }
         }
 

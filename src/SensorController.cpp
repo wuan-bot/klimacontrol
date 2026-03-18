@@ -31,10 +31,10 @@ void SensorController::begin() {
     for (auto &sensor : sensors) {
         if (sensor) {
             Serial.printf("SensorController: Initializing sensor %s...\r\n", sensor->getType());
-            if (!sensor->begin()) {
-                Serial.printf("SensorController: Failed to initialize sensor %s\r\n", sensor->getType());
-            } else {
+            if (sensor->tryBegin()) {
                 Serial.printf("SensorController: Successfully initialized sensor %s\r\n", sensor->getType());
+            } else {
+                Serial.printf("SensorController: Failed to initialize sensor %s\r\n", sensor->getType());
             }
         }
     }
@@ -106,12 +106,23 @@ void SensorController::sortSensors() {
 }
 
 void SensorController::readSensors() {
-    // Serial.println("SensorController: Reading sensors...");
-    // Serial.printf("SensorController: Found %u sensors, checking connections...\r\n", sensors.size());
+    uint32_t timestamp = millis();
+
+    // Retry failed sensors periodically
+    static constexpr uint32_t RETRY_INTERVAL_MS = 30000;
+    for (auto &sensor : sensors) {
+        if (sensor && sensor->getStatus() == Sensor::SensorStatus::InitFailed) {
+            if (timestamp - sensor->getLastInitAttempt() >= RETRY_INTERVAL_MS) {
+                Serial.printf("SensorController: Retrying init for %s...\r\n", sensor->getType());
+                if (sensor->tryBegin()) {
+                    Serial.printf("SensorController: %s now online\r\n", sensor->getType());
+                }
+            }
+        }
+    }
 
     std::vector<Sensor::Measurement> allMeasurements;
     bool anyValid = false;
-    uint32_t timestamp = millis();
 
     Sensor::ReadConfig readConfig;
     readConfig.elevation = config.loadDeviceConfig().elevation;
@@ -127,42 +138,46 @@ void SensorController::readSensors() {
     allMeasurements.reserve(totalExpected);
 
     for (auto &sensor : sensors) {
-        if (sensor) {
-            // if (sensor->isConnected()) {
-                // Serial.printf("SensorController: Reading from sensor %s...\r\n", sensor->getType());
-                uint32_t readStart = millis();
-                Sensor::SensorReading reading = sensor->read(readConfig, allMeasurements);
-                uint32_t readTime = millis() - readStart;
-                if (reading.valid) {
+        if (!sensor) continue;
+
+        // Skip sensors that aren't online
+        if (sensor->getStatus() != Sensor::SensorStatus::Online &&
+            sensor->getStatus() != Sensor::SensorStatus::ReadFailing) {
+            continue;
+        }
+
+        uint32_t readStart = millis();
+        Sensor::SensorReading reading = sensor->read(readConfig, allMeasurements);
+        uint32_t readTime = millis() - readStart;
+
+        sensor->recordReadResult(reading.valid);
+
+        if (reading.valid) {
 #if DEBUG
-                    Serial.printf("SensorController: Sensor %s #%d (%u ms): ", sensor->getType(), reading.measurements.size(), readTime);
-                    bool first = true;
+            Serial.printf("SensorController: Sensor %s #%d (%u ms): ", sensor->getType(), reading.measurements.size(), readTime);
+            bool first = true;
 #endif
-                    for (const auto &m : reading.measurements) {
+            for (const auto &m : reading.measurements) {
 #if DEBUG
-                        if (!first) Serial.print(", ");
-                        if (auto* i = std::get_if<int32_t>(&m.value)) {
-                            Serial.printf("%s: %d %s", Sensor::measurementTypeLabel(m.type), *i, Sensor::measurementTypeUnit(m.type));
-                        } else {
-                            Serial.printf("%s: %.1f %s", Sensor::measurementTypeLabel(m.type), std::get<float>(m.value), Sensor::measurementTypeUnit(m.type));
-                        }
-                        first = false;
+                if (!first) Serial.print(", ");
+                if (auto* i = std::get_if<int32_t>(&m.value)) {
+                    Serial.printf("%s: %d %s", Sensor::measurementTypeLabel(m.type), *i, Sensor::measurementTypeUnit(m.type));
+                } else {
+                    Serial.printf("%s: %.1f %s", Sensor::measurementTypeLabel(m.type), std::get<float>(m.value), Sensor::measurementTypeUnit(m.type));
+                }
+                first = false;
 #endif
-                        allMeasurements.push_back(m);
-                    }
+                allMeasurements.push_back(m);
+            }
 #ifdef DEBUG
-                    Serial.print("\r\n");
+            Serial.print("\r\n");
 #endif
 
-                    allMeasurements.push_back({Sensor::MeasurementType::Time, (int32_t)readTime, sensor->getType(), false});
-                    anyValid = true;
-                } else {
-                    Serial.printf("SensorController: Sensor %s - invalid data\r\n", sensor->getType());
-                }
-            } else {
-                Serial.println("SensorController: Sensor - not connected (null)");
-            }
-        // }
+            allMeasurements.push_back({Sensor::MeasurementType::Time, (int32_t)readTime, sensor->getType(), false});
+            anyValid = true;
+        } else {
+            Serial.printf("SensorController: Sensor %s - invalid data\r\n", sensor->getType());
+        }
     }
 
 #ifdef ARDUINO

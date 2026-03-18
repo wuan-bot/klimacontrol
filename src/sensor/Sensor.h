@@ -7,7 +7,30 @@
 #include <variant>
 #include <vector>
 
+#ifdef ARDUINO
+#include <Arduino.h>
+#else
+unsigned long millis();
+#endif
+
 namespace Sensor {
+    enum class SensorStatus : uint8_t {
+        Uninitialized,
+        Online,
+        InitFailed,
+        ReadFailing,
+    };
+
+    inline const char *sensorStatusLabel(SensorStatus s) {
+        switch (s) {
+            case SensorStatus::Uninitialized: return "uninitialized";
+            case SensorStatus::Online: return "online";
+            case SensorStatus::InitFailed: return "init_failed";
+            case SensorStatus::ReadFailing: return "read_failing";
+        }
+        return "unknown";
+    }
+
     enum class MeasurementType : uint8_t {
         Temperature,
         RelativeHumidity,
@@ -144,10 +167,47 @@ namespace Sensor {
      * Base sensor interface
      */
     class Sensor {
+    protected:
+        SensorStatus sensorStatus = SensorStatus::Uninitialized;
+        uint32_t lastInitAttempt = 0;
+        uint8_t consecutiveReadFailures = 0;
+        static constexpr uint8_t READ_FAILURE_THRESHOLD = 10;
+
     public:
         virtual ~Sensor() = default;
 
         virtual bool begin() = 0;
+
+        /**
+         * Wraps begin() with status tracking
+         */
+        bool tryBegin() {
+            lastInitAttempt = millis();
+            if (begin()) {
+                sensorStatus = SensorStatus::Online;
+                consecutiveReadFailures = 0;
+                return true;
+            }
+            sensorStatus = SensorStatus::InitFailed;
+            return false;
+        }
+
+        /**
+         * Record whether the last read() produced valid data
+         */
+        void recordReadResult(bool valid) {
+            if (valid) {
+                consecutiveReadFailures = 0;
+                if (sensorStatus == SensorStatus::ReadFailing) {
+                    sensorStatus = SensorStatus::Online;
+                }
+            } else if (sensorStatus == SensorStatus::Online) {
+                consecutiveReadFailures++;
+                if (consecutiveReadFailures >= READ_FAILURE_THRESHOLD) {
+                    sensorStatus = SensorStatus::ReadFailing;
+                }
+            }
+        }
 
         virtual SensorReading read() = 0;
 
@@ -160,6 +220,10 @@ namespace Sensor {
         virtual const char *getType() const = 0;
 
         virtual bool isConnected() = 0;
+
+        [[nodiscard]] SensorStatus getStatus() const { return sensorStatus; }
+        [[nodiscard]] uint32_t getLastInitAttempt() const { return lastInitAttempt; }
+        [[nodiscard]] uint8_t getConsecutiveReadFailures() const { return consecutiveReadFailures; }
 
         [[nodiscard]] virtual TypeSpan provides() const { return {nullptr, 0}; }
         [[nodiscard]] virtual TypeSpan requires() const { return {nullptr, 0}; }
