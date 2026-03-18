@@ -196,10 +196,10 @@ std::vector<Sensor::Measurement> SensorController::getMeasurements() const {
 #endif
 }
 
-float SensorController::getTemperature() const {
+float SensorController::getFloatMeasurement(Sensor::MeasurementType type) const {
 #ifdef ARDUINO
     if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-        auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::Temperature);
+        auto* m = Sensor::findMeasurement(currentMeasurements, type);
         float result = NAN;
         if (m) {
             const float* f = std::get_if<float>(&m->value);
@@ -210,59 +210,17 @@ float SensorController::getTemperature() const {
     }
     return NAN;
 #else
-    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::Temperature);
+    auto* m = Sensor::findMeasurement(currentMeasurements, type);
     if (!m) return NAN;
     const float* f = std::get_if<float>(&m->value);
     return f ? *f : NAN;
 #endif
 }
 
-float SensorController::getRelativeHumidity() const {
+int32_t SensorController::getIntMeasurement(Sensor::MeasurementType type) const {
 #ifdef ARDUINO
     if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-        auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::RelativeHumidity);
-        float result = NAN;
-        if (m) {
-            const float* f = std::get_if<float>(&m->value);
-            if (f) result = *f;
-        }
-        xSemaphoreGive(dataMutex);
-        return result;
-    }
-    return NAN;
-#else
-    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::RelativeHumidity);
-    if (!m) return NAN;
-    const float* f = std::get_if<float>(&m->value);
-    return f ? *f : NAN;
-#endif
-}
-
-float SensorController::getDewPoint() const {
-#ifdef ARDUINO
-    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-        auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::DewPoint);
-        float result = NAN;
-        if (m) {
-            const float* f = std::get_if<float>(&m->value);
-            if (f) result = *f;
-        }
-        xSemaphoreGive(dataMutex);
-        return result;
-    }
-    return NAN;
-#else
-    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::DewPoint);
-    if (!m) return NAN;
-    const float* f = std::get_if<float>(&m->value);
-    return f ? *f : NAN;
-#endif
-}
-
-int32_t SensorController::getVocIndex() const {
-#ifdef ARDUINO
-    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-        auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::VocIndex);
+        auto* m = Sensor::findMeasurement(currentMeasurements, type);
         int32_t result = -1;
         if (m) {
             const int32_t* i = std::get_if<int32_t>(&m->value);
@@ -273,11 +231,27 @@ int32_t SensorController::getVocIndex() const {
     }
     return -1;
 #else
-    auto* m = Sensor::findMeasurement(currentMeasurements, Sensor::MeasurementType::VocIndex);
+    auto* m = Sensor::findMeasurement(currentMeasurements, type);
     if (!m) return -1;
     const int32_t* i = std::get_if<int32_t>(&m->value);
     return i ? *i : -1;
 #endif
+}
+
+float SensorController::getTemperature() const {
+    return getFloatMeasurement(Sensor::MeasurementType::Temperature);
+}
+
+float SensorController::getRelativeHumidity() const {
+    return getFloatMeasurement(Sensor::MeasurementType::RelativeHumidity);
+}
+
+float SensorController::getDewPoint() const {
+    return getFloatMeasurement(Sensor::MeasurementType::DewPoint);
+}
+
+int32_t SensorController::getVocIndex() const {
+    return getIntMeasurement(Sensor::MeasurementType::VocIndex);
 }
 
 uint32_t SensorController::getLastReadingTimestamp() const {

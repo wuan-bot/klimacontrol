@@ -31,6 +31,10 @@ private:
 
     void sortSensors();
 
+    // Thread-safe measurement value accessors (return default on mutex timeout or missing data)
+    float getFloatMeasurement(Sensor::MeasurementType type) const;
+    int32_t getIntMeasurement(Sensor::MeasurementType type) const;
+
     // Temperature control state
     float targetTemperature;
     bool controlEnabled;
