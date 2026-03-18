@@ -1,4 +1,5 @@
 #include "Config.h"
+#include <cmath>
 
 #ifdef ARDUINO
 #include <esp_system.h>
@@ -96,6 +97,14 @@ namespace Config {
         config.elevation = prefs.getFloat(ELEVATION, 0.0f);
 
         prefs.end();
+
+        // Validate ranges — NVS may hold garbage after flash corruption
+        if (std::isnan(config.target_temperature) || config.target_temperature < 10.0f || config.target_temperature > 30.0f) {
+            config.target_temperature = 22.0f;
+        }
+        if (std::isnan(config.elevation) || config.elevation < -500.0f || config.elevation > 9000.0f) {
+            config.elevation = 0.0f;
+        }
 
         // Always generate device ID from MAC
         String deviceId = getDeviceId();
@@ -228,6 +237,14 @@ namespace Config {
 
         if (mqttConfig.prefix[0] == '\0') {
             strcpy(mqttConfig.prefix, "sensors");
+        }
+
+        // Validate ranges — NVS may hold garbage after flash corruption
+        if (mqttConfig.port == 0) {
+            mqttConfig.port = 1883;
+        }
+        if (mqttConfig.interval < 1 || mqttConfig.interval > 3600) {
+            mqttConfig.interval = 15;
         }
 
         prefs.end();
