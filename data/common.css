@@ -275,16 +275,115 @@ body {
     color: #333;
 }
 
+/* Stale data indicator */
+.sensor-grid.stale .sensor-value {
+    opacity: 0.4;
+    color: #999;
+}
+
+.sensor-grid.stale .sensor-unit {
+    opacity: 0.4;
+    color: #999;
+}
+
+/* Measurement section */
+.measurement-section {
+    margin-top: 16px;
+}
+
+.measurement-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.measurement-table thead tr {
+    border-bottom: 2px solid #ccc;
+}
+
+.measurement-table th,
+.measurement-table td {
+    padding: 6px 8px;
+}
+
+.measurement-table th {
+    text-align: left;
+}
+
+.measurement-table th:nth-child(2) {
+    text-align: right;
+}
+
+.measurement-table td:nth-child(2) {
+    text-align: right;
+}
+
+.measurement-table td:nth-child(4) {
+    color: #666;
+}
+
+.measurement-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.measurement-table .calc-note {
+    color: #888;
+    font-size: small;
+}
+
+.measurement-table .no-data {
+    padding: 8px;
+    color: #888;
+}
+
+/* Compact button variant */
+.btn-sm {
+    width: auto;
+    padding: 10px 16px;
+    margin-bottom: 10px;
+}
+
+/* Header info spans */
+.firmware-version {
+    opacity: 0.7;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+.ota-partition {
+    opacity: 0.6;
+    font-size: 0.85em;
+    margin-left: 5px;
+}
+
 @media (max-width: 480px) {
     .sensor-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .sensor-card {
+        padding: 10px 6px;
     }
     .sensor-value {
         font-size: 18px;
-        padding: 6px 8px;
+        padding: 6px 4px;
+    }
+    .sensor-label {
+        font-size: 10px;
     }
     .control-value {
         font-size: 16px;
+    }
+}
+
+@media (max-width: 320px) {
+    .sensor-grid {
+        grid-template-columns: 1fr;
     }
 }
 

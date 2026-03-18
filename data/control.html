@@ -13,8 +13,8 @@
             <h1 id="pageTitle">klimacontrol</h1>
             <div class="device-id">
                 <span id="deviceId">Loading...</span>
-                <span id="firmwareVersion" style="opacity: 0.7; font-size: 0.9em; margin-left: 10px;"></span>
-                <span id="otaPartition" style="opacity: 0.6; font-size: 0.85em; margin-left: 5px;"></span>
+                <span id="firmwareVersion" class="firmware-version"></span>
+                <span id="otaPartition" class="ota-partition"></span>
             </div>
         </div>
 
@@ -45,16 +45,16 @@
                 </div>
             </div>
 
-            <div id="measurementOverview" style="margin-top: 16px;">
-                <button class="btn btn-primary" onclick="showMeasurements()" style="width: auto; padding: 10px 16px; margin-bottom: 10px;">Show Measurements</button>
-                <button class="btn btn-danger" id="clearMeasurementsBtn" onclick="clearMeasurements()" style="display: none; width: auto; padding: 10px 16px; margin-bottom: 10px; margin-left: 8px;">Clear</button>
-                <table id="measurementTable" style="display: none; width: 100%; border-collapse: collapse; font-size: 0.95em;">
+            <div id="measurementOverview" class="measurement-section">
+                <button class="btn btn-primary btn-sm" onclick="showMeasurements()">Show Measurements</button>
+                <button class="btn btn-danger btn-sm" id="clearMeasurementsBtn" onclick="clearMeasurements()" style="display: none; margin-left: 8px;">Clear</button>
+                <table id="measurementTable" class="measurement-table" style="display: none;">
                     <thead>
-                        <tr style="border-bottom: 2px solid #ccc;">
-                            <th style="text-align: left; padding: 6px 8px;">Measurement</th>
-                            <th style="text-align: right; padding: 6px 8px;">Value</th>
-                            <th style="text-align: left; padding: 6px 8px;">Unit</th>
-                            <th style="text-align: left; padding: 6px 8px;">Sensor</th>
+                        <tr>
+                            <th>Measurement</th>
+                            <th>Value</th>
+                            <th>Unit</th>
+                            <th>Sensor</th>
                         </tr>
                     </thead>
                     <tbody id="measurementTableBody">
@@ -71,6 +71,8 @@
 
     <script>
         let currentStatus = {};
+        let lastSuccessfulFetch = Date.now();
+        let measurementsVisible = false;
 
         function esc(s) {
             const d = document.createElement('div');
@@ -131,7 +133,10 @@
         init();
 
         // Update status periodically
-        setInterval(updateStatus, 10000);
+        setInterval(function() {
+            updateStatus();
+            if (measurementsVisible) refreshMeasurements();
+        }, 10000);
 
         // Fetch and update device status
         async function updateStatus() {
@@ -173,12 +178,19 @@
                     controlStatusElement.textContent = currentStatus.control_enabled ? 'Active' : 'Off';
                     controlStatusElement.style.color = currentStatus.control_enabled ? '#28a745' : '#dc3545';
                 }
+
+                // Mark data as fresh
+                lastSuccessfulFetch = Date.now();
+                document.querySelector('.sensor-grid').classList.remove('stale');
             } catch (error) {
                 console.error('Failed to update status:', error);
+                if (Date.now() - lastSuccessfulFetch > 30000) {
+                    document.querySelector('.sensor-grid').classList.add('stale');
+                }
             }
         }
 
-        async function showMeasurements() {
+        async function refreshMeasurements() {
             try {
                 const response = await fetch('/api/measurements');
                 const data = await response.json();
@@ -187,7 +199,7 @@
                 const clearBtn = document.getElementById('clearMeasurementsBtn');
                 if (!tbody || !table) return;
                 if (!data.valid || !data.measurements || data.measurements.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="padding: 8px; color: #888;">No data available</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No data available</td></tr>';
                     table.style.display = 'table';
                     if (clearBtn) clearBtn.style.display = 'inline-block';
                     return;
@@ -196,12 +208,12 @@
                     const val = typeof m.value === 'number'
                         ? (Number.isInteger(m.value) ? m.value : m.value.toFixed(2))
                         : esc(String(m.value));
-                    const calcNote = m.calculated ? ' <small style="color:#888;">(calc)</small>' : '';
-                    return `<tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 6px 8px;">${esc(m.type)}${calcNote}</td>
-                        <td style="padding: 6px 8px; text-align: right;">${val}</td>
-                        <td style="padding: 6px 8px;">${esc(m.unit)}</td>
-                        <td style="padding: 6px 8px; color: #666;">${esc(m.sensor)}</td>
+                    const calcNote = m.calculated ? ' <small class="calc-note">(calc)</small>' : '';
+                    return `<tr>
+                        <td>${esc(m.type)}${calcNote}</td>
+                        <td>${val}</td>
+                        <td>${esc(m.unit)}</td>
+                        <td>${esc(m.sensor)}</td>
                     </tr>`;
                 }).join('');
                 table.style.display = 'table';
@@ -211,7 +223,13 @@
             }
         }
 
+        async function showMeasurements() {
+            measurementsVisible = true;
+            await refreshMeasurements();
+        }
+
         function clearMeasurements() {
+            measurementsVisible = false;
             const table = document.getElementById('measurementTable');
             const tbody = document.getElementById('measurementTableBody');
             const clearBtn = document.getElementById('clearMeasurementsBtn');
