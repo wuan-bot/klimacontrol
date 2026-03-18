@@ -22,15 +22,15 @@
             <div class="sensor-grid">
                 <div class="sensor-card">
                     <div class="sensor-label">Temperature</div>
-                    <div class="sensor-value" id="currentTemp">-</div>
+                    <div class="sensor-value"><span class="sensor-number" id="currentTemp">-</span><span class="sensor-unit">&deg;C</span></div>
                 </div>
                 <div class="sensor-card">
                     <div class="sensor-label">Rel. Humidity</div>
-                    <div class="sensor-value" id="currentHumidity">-</div>
+                    <div class="sensor-value"><span class="sensor-number" id="currentHumidity">-</span><span class="sensor-unit">%</span></div>
                 </div>
                 <div class="sensor-card">
                     <div class="sensor-label">Dew Point</div>
-                    <div class="sensor-value" id="currentDewPoint">-</div>
+                    <div class="sensor-value"><span class="sensor-number" id="currentDewPoint">-</span><span class="sensor-unit">&deg;C</span></div>
                 </div>
             </div>
 
@@ -146,19 +146,19 @@
                 // Update temperature display
                 const tempElement = document.getElementById('currentTemp');
                 if (tempElement && currentStatus.temperature !== undefined) {
-                    tempElement.textContent = `${currentStatus.temperature.toFixed(1)} °C`;
+                    tempElement.textContent = currentStatus.temperature.toFixed(1);
                 }
-                
+
                 // Update humidity display
                 const humidityElement = document.getElementById('currentHumidity');
                 if (humidityElement && currentStatus.relative_humidity !== undefined) {
-                    humidityElement.textContent = `${currentStatus.relative_humidity.toFixed(1)} %`;
+                    humidityElement.textContent = currentStatus.relative_humidity.toFixed(1);
                 }
 
                 // Update dew point display from measurements array
                 const dewPointElement = document.getElementById('currentDewPoint');
                 if (dewPointElement && currentStatus.dew_point !== undefined) {
-                    dewPointElement.textContent = `${currentStatus.dew_point.toFixed(1)} °C`;
+                    dewPointElement.textContent = currentStatus.dew_point.toFixed(1);
                 }
                 
                 // Update target temperature display
