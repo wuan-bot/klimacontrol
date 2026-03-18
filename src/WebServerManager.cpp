@@ -802,6 +802,14 @@ void WebServerManager::setupAPIRoutes() {
         MqttClient* mqtt = network.getMqttClient();
         doc["connected"] = mqtt ? mqtt->isConnected() : false;
 
+        if (mqtt) {
+            JsonObject stats = doc["stats"].to<JsonObject>();
+            stats["published"] = mqtt->getPublishedCount();
+            stats["failed"] = mqtt->getFailedCount();
+            stats["cycles"] = mqtt->getPublishCycles();
+            stats["failedCycles"] = mqtt->getFailedCycles();
+        }
+
         String response;
         serializeJson(doc, response);
         request->send(200, CONTENT_TYPE_JSON, response);

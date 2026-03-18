@@ -20,6 +20,12 @@ private:
     uint32_t lastConnectAttempt;
     static constexpr uint32_t RECONNECT_INTERVAL_MS = 5000;
 
+    // Publish statistics
+    uint32_t publishedCount = 0;    // successful individual publishes
+    uint32_t failedCount = 0;       // failed individual publishes
+    uint32_t publishCycles = 0;     // total publish cycles (calls to publishAll)
+    uint32_t failedCycles = 0;      // cycles with at least one failure
+
     void applyServer();
 
 public:
@@ -31,6 +37,13 @@ public:
     bool isConnected();
     bool isEnabled() const;
     uint32_t getIntervalMs() const { return static_cast<uint32_t>(config.interval) * 1000; }
+
+    // Publish statistics
+    uint32_t getPublishedCount() const { return publishedCount; }
+    uint32_t getFailedCount() const { return failedCount; }
+    uint32_t getPublishCycles() const { return publishCycles; }
+    uint32_t getFailedCycles() const { return failedCycles; }
+    void recordPublishResult(uint32_t succeeded, uint32_t failed);
 };
 
 #endif // KLIMACONTROL_MQTT_CLIENT_H

@@ -126,3 +126,10 @@ bool MqttClient::isConnected() {
 bool MqttClient::isEnabled() const {
     return configured && config.enabled;
 }
+
+void MqttClient::recordPublishResult(uint32_t succeeded, uint32_t failed) {
+    publishedCount += succeeded;
+    failedCount += failed;
+    publishCycles++;
+    if (failed > 0) failedCycles++;
+}

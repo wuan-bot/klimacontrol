@@ -439,6 +439,9 @@ void Network::publishMeasurements(const std::vector<Sensor::Measurement>& measur
     uint32_t epoch = getCurrentEpoch();
     Config::MqttConfig mqttConfig = config.loadMqttConfig();
 
+    uint32_t succeeded = 0;
+    uint32_t failed = 0;
+
     for (const auto& m : measurements) {
         char topic[128];
         snprintf(topic, sizeof(topic), "%s/%s", mqttConfig.prefix, Sensor::measurementTypeLabel(m.type));
@@ -454,7 +457,18 @@ void Network::publishMeasurements(const std::vector<Sensor::Measurement>& measur
                 epoch, std::get<float>(m.value), Sensor::measurementTypeUnit(m.type), m.sensor, m.calculated ? "true" : "false");
         }
 
-        mqttClient->publish(topic, payload);
+        if (mqttClient->publish(topic, payload)) {
+            succeeded++;
+        } else {
+            failed++;
+        }
+    }
+
+    mqttClient->recordPublishResult(succeeded, failed);
+
+    if (failed > 0) {
+        Serial.printf("MQTT: Published %u/%u measurements (%u failed)\r\n",
+                      succeeded, succeeded + failed, failed);
     }
 #endif
 }
