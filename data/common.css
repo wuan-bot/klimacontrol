@@ -201,32 +201,74 @@ body {
     color: #333;
 }
 
-/* Status bar */
-.status-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 10px;
-    margin-bottom: 30px;
+/* Sensor measurement grid */
+.sensor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
-.status-item {
+.sensor-card {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 16px 12px;
     text-align: center;
 }
 
-.status-label {
-    font-size: 12px;
+.sensor-label {
+    font-size: 11px;
     color: #6c757d;
     text-transform: uppercase;
-    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
 }
 
-.status-value {
+.sensor-value {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Control parameters bar */
+.control-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.control-item {
+    flex: 1;
+    background-color: #eef0fb;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+}
+
+.control-label-sm {
+    font-size: 11px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.control-value {
     font-size: 18px;
     font-weight: bold;
     color: #333;
+}
+
+@media (max-width: 480px) {
+    .sensor-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .sensor-value {
+        font-size: 18px;
+    }
+    .control-value {
+        font-size: 16px;
+    }
 }
 
 /* Control elements */
