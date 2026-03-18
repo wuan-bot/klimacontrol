@@ -50,44 +50,6 @@ namespace Config {
     };
 
     /**
-     * Timer action types
-     */
-    enum class TimerAction : uint8_t {
-        ENABLE_CONTROL = 0,
-        DISABLE_CONTROL = 1,
-        UPDATE_SETPOINT = 2
-    };
-
-    /**
-     * Timer types
-     */
-    enum class TimerType : uint8_t {
-        COUNTDOWN = 0, // One-shot countdown timer (duration-based)
-        ALARM_DAILY = 1 // Recurring daily alarm
-    };
-
-    /**
-     * Timer entry structure
-     */
-    struct TimerEntry {
-        bool enabled = false;
-        TimerType type = TimerType::COUNTDOWN;
-        TimerAction action = TimerAction::ENABLE_CONTROL;
-        uint8_t preset_index = 0;
-        uint32_t target_time = 0; // epoch for COUNTDOWN, seconds-since-midnight for ALARM_DAILY
-        uint32_t duration_seconds = 0; // original duration for countdown display
-    };
-
-    /**
-     * Timers configuration structure
-     */
-    struct TimersConfig {
-        static constexpr uint8_t MAX_TIMERS = 4;
-        TimerEntry timers[MAX_TIMERS];
-        int8_t timezone_offset_hours = 0;
-    };
-
-    /**
      * MQTT configuration structure
      */
     struct MqttConfig {
@@ -114,19 +76,6 @@ namespace Config {
     struct SensorConfig {
         char assignments[128]; // e.g. "44=SHT4x,77=BME680,59=SGP40"
         SensorConfig() { assignments[0] = '\0'; }
-    };
-
-    /**
-     * Touch control configuration structure
-     * Maps touch pins to preset indices for physical control
-     */
-    struct TouchConfig {
-        static constexpr uint8_t MAX_TOUCH_PINS = 3;
-        bool enabled; // Touch control enabled
-        uint16_t threshold; // Touch detection threshold (lower = more sensitive)
-
-        TouchConfig() : enabled(true), threshold(45000) {
-        }
     };
 
     /**
@@ -236,30 +185,6 @@ namespace Config {
          * @return Number of consecutive failures
          */
         uint8_t getConnectionFailures();
-
-        /**
-         * Load timers configuration from NVS
-         * @return TimersConfig structure
-         */
-        TimersConfig loadTimersConfig();
-
-        /**
-         * Save timers configuration to NVS
-         * @param config Timers configuration to save
-         */
-        void saveTimersConfig(const TimersConfig &config);
-
-        /**
-         * Load touch configuration from NVS
-         * @return TouchConfig structure
-         */
-        TouchConfig loadTouchConfig();
-
-        /**
-         * Save touch configuration to NVS
-         * @param config Touch configuration to save
-         */
-        void saveTouchConfig(const TouchConfig &config);
 
         /**
          * Load sensor configuration from NVS
