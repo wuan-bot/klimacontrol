@@ -111,7 +111,10 @@ void SensorController::readSensors() {
     // Retry failed sensors periodically
     static constexpr uint32_t RETRY_INTERVAL_MS = 30000;
     for (auto &sensor : sensors) {
-        if (sensor && sensor->getStatus() == Sensor::SensorStatus::InitFailed) {
+        if (!sensor) continue;
+        auto status = sensor->getStatus();
+        if (status == Sensor::SensorStatus::InitFailed ||
+            status == Sensor::SensorStatus::ReadFailing) {
             if (timestamp - sensor->getLastInitAttempt() >= RETRY_INTERVAL_MS) {
                 Serial.printf("SensorController: Retrying init for %s...\r\n", sensor->getType());
                 if (sensor->tryBegin()) {
@@ -140,9 +143,8 @@ void SensorController::readSensors() {
     for (auto &sensor : sensors) {
         if (!sensor) continue;
 
-        // Skip sensors that aren't online
-        if (sensor->getStatus() != Sensor::SensorStatus::Online &&
-            sensor->getStatus() != Sensor::SensorStatus::ReadFailing) {
+        // Only read sensors that are online
+        if (sensor->getStatus() != Sensor::SensorStatus::Online) {
             continue;
         }
 
@@ -368,7 +370,7 @@ uint32_t SensorController::getTimeSinceLastReading() const {
 
 bool SensorController::hasConnectedSensors() const {
     for (const auto &sensor : sensors) {
-        if (sensor && sensor->isConnected()) {
+        if (sensor && sensor->getStatus() == Sensor::SensorStatus::Online) {
             return true;
         }
     }
