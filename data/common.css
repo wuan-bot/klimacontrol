@@ -443,10 +443,6 @@ input[type="range"]::-moz-range-thumb {
     border: none;
 }
 
-input.unchanged {
-    border-left: 3px solid #a8d5a2;
-}
-
 input[type="number"],
 input[type="text"],
 input[type="password"] {
@@ -463,6 +459,12 @@ input[type="text"]:focus,
 input[type="password"]:focus {
     outline: none;
     border-color: #667eea;
+}
+
+input[type="number"].unchanged,
+input[type="text"].unchanged,
+input[type="password"].unchanged {
+    border-left: 3px solid #a8d5a2;
 }
 
 input[type="color"] {

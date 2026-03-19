@@ -114,6 +114,32 @@
         </div>
 
         <div class="section">
+            <h2>WiFi Configuration</h2>
+            <p>Update the WiFi network credentials. The device will restart after saving.</p>
+
+            <div class="info-box" style="margin-bottom: 15px;">
+                <strong>Connected to: </strong><span id="currentSSID">Loading...</span>
+            </div>
+
+            <div class="form-group">
+                <label for="wifiSSID">WiFi Network (SSID)</label>
+                <input type="text" id="wifiSSID" placeholder="Enter WiFi network name">
+            </div>
+
+            <div class="form-group">
+                <label for="wifiPassword">WiFi Password</label>
+                <input type="password" id="wifiPassword" placeholder="Enter WiFi password">
+            </div>
+
+            <button class="btn btn-primary" onclick="updateWiFi()">Update WiFi</button>
+
+            <div class="warning-box">
+                <strong>Note:</strong> The device will restart after updating WiFi credentials. You will need to
+                reconnect to the new network to access the device.
+            </div>
+        </div>
+
+        <div class="section">
             <h2>Firmware Updates (OTA)</h2>
             <p>Check for and install firmware updates from GitHub releases.</p>
 
@@ -148,34 +174,8 @@
             </div>
 
             <div class="warning-box">
-                <strong>Note: </strong>The device will restart after installing an update. Make sure you have a stable
+                <strong>Note:</strong> The device will restart after installing an update. Make sure you have a stable
                 WiFi connection before updating.
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>WiFi Configuration</h2>
-            <p>Update the WiFi network credentials. The device will restart after saving.</p>
-
-            <div class="info-box">
-                <strong>Connected to: </strong><span id="currentSSID">Loading...</span>
-            </div>
-
-            <div class="form-group">
-                <label for="wifiSSID">WiFi Network (SSID)</label>
-                <input type="text" id="wifiSSID" placeholder="Enter WiFi network name">
-            </div>
-
-            <div class="form-group">
-                <label for="wifiPassword">WiFi Password</label>
-                <input type="password" id="wifiPassword" placeholder="Enter WiFi password">
-            </div>
-
-            <button class="btn btn-primary" onclick="updateWiFi()">Update WiFi</button>
-
-            <div class="warning-box">
-                <strong>Note: </strong>The device will restart after updating WiFi credentials. You will need to
-                reconnect to the new network to access the device.
             </div>
         </div>
 
