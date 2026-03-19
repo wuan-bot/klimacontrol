@@ -851,6 +851,66 @@ void WebServerManager::setupAPIRoutes() {
               }
     );
 
+    // GET /api/settings/energy - Get energy configuration
+    server.on("/api/settings/energy", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        Config::EnergyConfig energyConfig = config.loadEnergyConfig();
+
+        JsonDocument doc;
+        doc["wifi_power"] = energyConfig.wifi_power;
+        doc["cpu_freq_mhz"] = energyConfig.cpu_freq_mhz;
+
+        String response;
+        serializeJson(doc, response);
+        request->send(200, CONTENT_TYPE_JSON, response);
+    });
+
+    // POST /api/settings/energy - Update energy configuration (triggers restart)
+    server.on("/api/settings/energy", HTTP_POST,
+              []([[maybe_unused]] AsyncWebServerRequest *request) {
+              },
+              nullptr,
+              [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
+                  if (index == 0) {
+                      JsonDocument doc;
+                      DeserializationError error = deserializeJson(doc, data, len);
+
+                      if (error) {
+                          request->send(400, CONTENT_TYPE_JSON, JSON_RESPONSE_ERROR_INVALID_JSON);
+                          return;
+                      }
+
+                      Config::EnergyConfig energyConfig = config.loadEnergyConfig();
+
+                      if (doc["wifi_power"].is<int>()) {
+                          uint8_t wp = doc["wifi_power"];
+                          if (wp == 8 || wp == 34 || wp == 52 || wp == 68 || wp == 80) {
+                              energyConfig.wifi_power = wp;
+                          } else {
+                              request->send(400, CONTENT_TYPE_JSON,
+                                            R"({"success":false,"error":"Invalid wifi_power value"})");
+                              return;
+                          }
+                      }
+
+                      if (doc["cpu_freq_mhz"].is<int>()) {
+                          uint16_t freq = doc["cpu_freq_mhz"];
+                          if (freq == 80 || freq == 160 || freq == 240) {
+                              energyConfig.cpu_freq_mhz = freq;
+                          } else {
+                              request->send(400, CONTENT_TYPE_JSON,
+                                            R"({"success":false,"error":"Invalid cpu_freq_mhz value"})");
+                              return;
+                          }
+                      }
+
+                      config.saveEnergyConfig(energyConfig);
+                      config.requestRestart(1000);
+
+                      request->send(200, CONTENT_TYPE_JSON, JSON_RESPONSE_SUCCESS);
+                  }
+              }
+    );
+
     // GET /about - About page
     server.on("/about", HTTP_GET, [](AsyncWebServerRequest *request) {
         sendGzippedResponse(request, CONTENT_TYPE_HTML, ABOUT_GZ, ABOUT_GZ_LEN);

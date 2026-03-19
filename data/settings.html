@@ -140,6 +140,37 @@
         </div>
 
         <div class="section">
+            <h2>Energy</h2>
+            <p>Adjust WiFi transmit power and CPU frequency. Lower values reduce power consumption.</p>
+
+            <div class="form-group">
+                <label for="wifiPower">WiFi TX Power</label>
+                <select id="wifiPower">
+                    <option value="8">Lowest (2 dBm)</option>
+                    <option value="34">Low (8 dBm)</option>
+                    <option value="52">Medium (13 dBm)</option>
+                    <option value="68">High (17 dBm)</option>
+                    <option value="80">Max (20 dBm)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cpuFreq">CPU Max Frequency</label>
+                <select id="cpuFreq">
+                    <option value="80">80 MHz</option>
+                    <option value="160">160 MHz</option>
+                    <option value="240">240 MHz</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="updateEnergy()">Save Energy Settings</button>
+
+            <div class="warning-box" style="margin-top: 10px;">
+                <strong>Note:</strong> The device will restart after saving energy settings.
+            </div>
+        </div>
+
+        <div class="section">
             <h2>Firmware Updates (OTA)</h2>
             <p>Check for and install firmware updates from GitHub releases.</p>
 
@@ -723,11 +754,52 @@
         }
     }
 
+    // Energy Functions
+    async function loadEnergyConfig() {
+        try {
+            const response = await fetch('/api/settings/energy');
+            const data = await response.json();
+
+            document.getElementById('wifiPower').value = data.wifi_power || 52;
+            document.getElementById('cpuFreq').value = data.cpu_freq_mhz || 240;
+        } catch (error) {
+            console.error('Failed to load energy config:', error);
+        }
+    }
+
+    async function updateEnergy() {
+        const wifiPower = parseInt(document.getElementById('wifiPower').value);
+        const cpuFreq = parseInt(document.getElementById('cpuFreq').value);
+
+        if (!confirm('Save energy settings?\n\nThe device will restart to apply changes.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/settings/energy', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({wifi_power: wifiPower, cpu_freq_mhz: cpuFreq})
+            });
+
+            if (response.ok) {
+                alert('Energy settings saved. Device is restarting...');
+            } else {
+                const data = await response.json();
+                alert('Failed to save energy settings: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Failed to update energy settings:', error);
+            alert('Error saving energy settings');
+        }
+    }
+
     // Load device info on page load
     loadStatus();
     loadOTAStatus();
     loadSensorConfig();
     loadMqttConfig();
+    loadEnergyConfig();
 </script>
 </body>
 </html>

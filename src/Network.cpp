@@ -124,8 +124,9 @@ void Network::startSTA(const char *ssid, const char *password) {
     // Disable WiFi power save for best reception (matches CircuitPython default)
     WiFi.setSleep(WIFI_PS_MAX_MODEM);
 
-    // Use a moderate TX power sufficient for typical indoor distances (< 30 m).
-    WiFi.setTxPower(WIFI_POWER_13dBm);
+    // Apply WiFi TX power from energy config
+    Config::EnergyConfig energyConfig = config.loadEnergyConfig();
+    WiFi.setTxPower(static_cast<wifi_power_t>(energyConfig.wifi_power));
 
     Serial.println("WiFi Configuration:");
     Serial.printf("  Power save: MIN_MODEM\r\n");

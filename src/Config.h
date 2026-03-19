@@ -79,6 +79,15 @@ namespace Config {
     };
 
     /**
+     * Energy configuration structure
+     */
+    struct EnergyConfig {
+        uint8_t wifi_power;    // wifi_power_t raw value, default 52 (13 dBm)
+        uint16_t cpu_freq_mhz; // 80, 160, or 240, default 240
+        EnergyConfig() : wifi_power(52), cpu_freq_mhz(240) {}
+    };
+
+    /**
      * Configuration Manager
      * Handles persistent storage using ESP32 Preferences (NVS)
      */
@@ -91,6 +100,8 @@ namespace Config {
         static constexpr const char *TARGET_TEMPERATURE = "target_temperature";
         static constexpr const char *TEMPERATURE_CONTROL_ENABLED = "temperature_control_enabled";
         static constexpr const char *ELEVATION = "elevation";
+        static constexpr const char *ENERGY_WIFI_PW = "energy_wifi_pw";
+        static constexpr const char *ENERGY_CPU_MHZ = "energy_cpu_mhz";
 
 
         bool restartRequested = false;
@@ -209,6 +220,9 @@ namespace Config {
          * @param config MQTT configuration to save
          */
         void saveMqttConfig(const MqttConfig &config);
+
+        EnergyConfig loadEnergyConfig();
+        void saveEnergyConfig(const EnergyConfig &config);
     };
 } // namespace Config
 
