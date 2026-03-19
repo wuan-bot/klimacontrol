@@ -277,7 +277,6 @@ namespace Config {
         prefs.begin(NAMESPACE, true);
 
         energyConfig.wifi_power = prefs.getUChar(ENERGY_WIFI_PW, 52);
-        energyConfig.cpu_freq_mhz = prefs.getUShort(ENERGY_CPU_MHZ, 240);
 
         prefs.end();
 
@@ -285,12 +284,6 @@ namespace Config {
         uint8_t wp = energyConfig.wifi_power;
         if (wp != 8 && wp != 34 && wp != 52 && wp != 68 && wp != 80) {
             energyConfig.wifi_power = 52;
-        }
-
-        // Validate cpu_freq_mhz
-        uint16_t freq = energyConfig.cpu_freq_mhz;
-        if (freq != 80 && freq != 160 && freq != 240) {
-            energyConfig.cpu_freq_mhz = 240;
         }
 #endif
 
@@ -302,7 +295,6 @@ namespace Config {
         prefs.begin(NAMESPACE, false);
 
         prefs.putUChar(ENERGY_WIFI_PW, config.wifi_power);
-        prefs.putUShort(ENERGY_CPU_MHZ, config.cpu_freq_mhz);
 
         prefs.end();
 

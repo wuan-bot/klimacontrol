@@ -857,7 +857,6 @@ void WebServerManager::setupAPIRoutes() {
 
         JsonDocument doc;
         doc["wifi_power"] = energyConfig.wifi_power;
-        doc["cpu_freq_mhz"] = energyConfig.cpu_freq_mhz;
 
         String response;
         serializeJson(doc, response);
@@ -888,17 +887,6 @@ void WebServerManager::setupAPIRoutes() {
                           } else {
                               request->send(400, CONTENT_TYPE_JSON,
                                             R"({"success":false,"error":"Invalid wifi_power value"})");
-                              return;
-                          }
-                      }
-
-                      if (doc["cpu_freq_mhz"].is<int>()) {
-                          uint16_t freq = doc["cpu_freq_mhz"];
-                          if (freq == 80 || freq == 160 || freq == 240) {
-                              energyConfig.cpu_freq_mhz = freq;
-                          } else {
-                              request->send(400, CONTENT_TYPE_JSON,
-                                            R"({"success":false,"error":"Invalid cpu_freq_mhz value"})");
                               return;
                           }
                       }

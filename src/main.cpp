@@ -115,11 +115,8 @@ void setup() {
     sensorController.setControlEnabled(deviceConfig.temperature_control_enabled);
 
 #ifdef ARDUINO
-    Config::EnergyConfig energyConfig = config.loadEnergyConfig();
-    Serial.printf("Energy: CPU max freq=%u MHz\r\n", energyConfig.cpu_freq_mhz);
-
     esp_pm_config_esp32s2_t pm_config = {
-        .max_freq_mhz = static_cast<int>(energyConfig.cpu_freq_mhz),
+        .max_freq_mhz = 80,
         .min_freq_mhz = 10,
         .light_sleep_enable = true
     };
