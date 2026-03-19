@@ -8,3 +8,13 @@ src/generated/
 # CodeQL artifacts
 _codeql_detected_source_root
 *.gch
+
+# Coverage artifacts
+coverage/
+*.gcda
+*.gcno
+*.gcov
+
+# Python cache
+__pycache__/
+*.pyc
