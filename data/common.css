@@ -443,6 +443,10 @@ input[type="range"]::-moz-range-thumb {
     border: none;
 }
 
+input.unchanged {
+    border-left: 3px solid #a8d5a2;
+}
+
 input[type="number"],
 input[type="text"],
 input[type="password"] {

@@ -27,10 +27,6 @@
             </div>
 
             <button class="btn btn-primary" onclick="updateDeviceName()">Update Name</button>
-
-            <div class="info-box">
-                <strong>Current: </strong><span id="currentDeviceName">Loading...</span>
-            </div>
         </div>
 
         <div class="section">
@@ -43,10 +39,6 @@
             </div>
 
             <button class="btn btn-primary" onclick="updateElevation()">Update Elevation</button>
-
-            <div class="info-box">
-                <strong>Current: </strong><span id="currentElevation">Loading...</span> m
-            </div>
         </div>
 
         <div class="section">
@@ -165,6 +157,10 @@
             <h2>WiFi Configuration</h2>
             <p>Update the WiFi network credentials. The device will restart after saving.</p>
 
+            <div class="info-box">
+                <strong>Connected to: </strong><span id="currentSSID">Loading...</span>
+            </div>
+
             <div class="form-group">
                 <label for="wifiSSID">WiFi Network (SSID)</label>
                 <input type="text" id="wifiSSID" placeholder="Enter WiFi network name">
@@ -177,7 +173,7 @@
 
             <button class="btn btn-primary" onclick="updateWiFi()">Update WiFi</button>
 
-            <div class="info-box">
+            <div class="warning-box">
                 <strong>Note: </strong>The device will restart after updating WiFi credentials. You will need to
                 reconnect to the new network to access the device.
             </div>
@@ -212,17 +208,44 @@
 </div>
 
 <script>
-    // Load current device name
-    async function loadDeviceName() {
+    // Mark an input as unchanged and track edits
+    function markUnchanged(input) {
+        if (input.dataset.unchangedBound) return;
+        input.dataset.unchangedBound = '1';
+        input.dataset.originalValue = input.value;
+        input.classList.add('unchanged');
+        input.addEventListener('input', function () {
+            if (this.value === this.dataset.originalValue) {
+                this.classList.add('unchanged');
+            } else {
+                this.classList.remove('unchanged');
+            }
+        });
+    }
+
+    // Load device name, elevation, and WiFi SSID from a single /api/status call
+    async function loadStatus() {
         try {
             const response = await fetch('/api/status');
             const data = await response.json();
+
             const name = data.device_name || data.device_id;
-            document.getElementById('currentDeviceName').textContent = name;
-            document.getElementById('deviceName').value = name;
+            const deviceNameInput = document.getElementById('deviceName');
+            deviceNameInput.value = name;
+            markUnchanged(deviceNameInput);
+
+            const elevation = data.elevation ?? 0;
+            const elevationInput = document.getElementById('elevation');
+            elevationInput.value = elevation;
+            markUnchanged(elevationInput);
+
+            const ssid = data.wifi_ssid || '';
+            document.getElementById('currentSSID').textContent = ssid || 'Unknown';
+            const ssidInput = document.getElementById('wifiSSID');
+            ssidInput.value = ssid;
+            markUnchanged(ssidInput);
         } catch (error) {
-            console.error('Failed to load device name:', error);
-            document.getElementById('currentDeviceName').textContent = 'Error loading';
+            console.error('Failed to load status:', error);
         }
     }
 
@@ -244,7 +267,7 @@
 
             if (response.ok) {
                 alert('Device name updated successfully!');
-                loadDeviceName();
+                loadStatus();
             } else {
                 const data = await response.json();
                 alert('Failed to update device name: ' + (data.error || 'Unknown error'));
@@ -434,6 +457,10 @@
             document.getElementById('mqttUsername').value = data.username || '';
             document.getElementById('mqttPrefix').value = data.prefix || '';
             document.getElementById('mqttInterval').value = data.interval || 15;
+
+            ['mqttHost', 'mqttPort', 'mqttUsername', 'mqttPrefix', 'mqttInterval'].forEach(id => {
+                markUnchanged(document.getElementById(id));
+            });
 
             const status = data.enabled
                 ? (data.connected ? 'Connected' : 'Disconnected')
@@ -652,19 +679,6 @@
     }
 
     // Elevation Functions
-    async function loadElevation() {
-        try {
-            const response = await fetch('/api/status');
-            const data = await response.json();
-            const elevation = data.elevation ?? 0;
-            document.getElementById('currentElevation').textContent = elevation;
-            document.getElementById('elevation').value = elevation;
-        } catch (error) {
-            console.error('Failed to load elevation:', error);
-            document.getElementById('currentElevation').textContent = 'Error';
-        }
-    }
-
     async function updateElevation() {
         const elevation = parseFloat(document.getElementById('elevation').value);
         if (isNaN(elevation) || elevation < -500 || elevation > 8848) {
@@ -681,7 +695,7 @@
 
             if (response.ok) {
                 alert('Elevation updated successfully!');
-                loadElevation();
+                loadStatus();
             } else {
                 const data = await response.json();
                 alert('Failed to update elevation: ' + (data.error || 'Unknown error'));
@@ -710,8 +724,7 @@
     }
 
     // Load device info on page load
-    loadDeviceName();
-    loadElevation();
+    loadStatus();
     loadOTAStatus();
     loadSensorConfig();
     loadMqttConfig();
