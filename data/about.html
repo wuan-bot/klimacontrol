@@ -92,6 +92,7 @@
                         createRow('Status', 'Connected') +
                         createRow('SSID', data.wifi_ssid) +
                         createRow('Signal', data.wifi_rssi + ' dBm') +
+                        createRow('TX Power', data.wifi_tx_power + ' (raw)') +
                         createRow('IP Address', data.ip_address) +
                         createRow('MAC Address', data.mac_address);
                 } else if (data.ap_ssid) {

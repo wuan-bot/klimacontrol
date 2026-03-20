@@ -649,6 +649,7 @@ void WebServerManager::setupAPIRoutes() {
         if (WiFiClass::status() == WL_CONNECTED) {
             doc["wifi_ssid"] = WiFi.SSID();
             doc["wifi_rssi"] = WiFi.RSSI();
+            doc["wifi_tx_power"] = WiFi.getTxPower();
             doc["ip_address"] = WiFi.localIP().toString();
             doc["mac_address"] = WiFi.macAddress();
         } else if (WiFiClass::getMode() == WIFI_AP) {
