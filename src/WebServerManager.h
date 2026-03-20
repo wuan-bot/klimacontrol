@@ -57,6 +57,16 @@ protected:
      */
     void setupAPIRoutes();
 
+    // Route setup methods (implemented in routes/*.cpp)
+    void setupPageRoutes();
+    void setupStatusRoutes();
+    void setupSensorRoutes();
+    void setupControlRoutes();
+    void setupSettingsRoutes();
+    void setupOTARoutes();
+    void setupMqttRoutes();
+    void setupI2CRoutes();
+
     /**
      * Handle WiFi configuration POST request
      */
