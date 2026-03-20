@@ -234,20 +234,11 @@ void Network::configureUsingAPMode() {
     // Initialize status LED early (works without WiFi) - uses built-in NeoPixel
     statusLed = std::make_unique<StatusLed>(); // Built-in NeoPixel, 1 pixel
     statusLed->begin();
-    statusLed->setState(LedState::BLINK_SLOW); // Indicate booting
+    statusLed->setState(LedState::STARTUP); // Indicate booting
     
-    // Initialize touch controller early (works without WiFi)
-    // touchController = std::make_unique<TouchController>(config, sensorController);
-    // touchController->begin();
-
-    // Check if WiFi is configured
     if (!config.isConfigured()) {
         Serial.println("No WiFi configuration found - starting AP mode");
         
-        if (statusLed) {
-            statusLed->setState(LedState::BLINK_FAST); // Fast blink for AP mode
-        }
-
         configureUsingAPMode();
     }
     Serial.println("Network task configured");
@@ -402,9 +393,10 @@ void Network::configureUsingAPMode() {
                     if (lastMqttPublish == 0) lastMqttPublish = now;
 
                     if (intervalMs > 0 && now >= 60000 && (now - lastMqttPublish >= intervalMs)) {
+                        statusLed->setState(LedState::TRANSMIT_DATA);
+
                         lastMqttPublish = now;
                         publishMeasurements(sensorController.getMeasurements());
-                        if (statusLed) statusLed->setState(LedState::MQTT_ACTIVE);
                     }
 
                     // Update MQTT progress for green→red gradient on status LED
@@ -412,6 +404,7 @@ void Network::configureUsingAPMode() {
                         float prog = static_cast<float>(now - lastMqttPublish) / intervalMs;
                         if (prog > 1.0f) prog = 1.0f;
                         statusLed->setProgress(prog);
+                        statusLed->setState(LedState::ON);
                     }
                 } else if (statusLed) {
                     statusLed->setProgress(0.0f);
