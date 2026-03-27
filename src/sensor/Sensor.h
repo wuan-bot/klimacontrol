@@ -90,27 +90,27 @@ namespace Sensor {
 
     inline const char *measurementTypeUnit(MeasurementType t) {
         switch (t) {
-            case MeasurementType::Temperature: return "°C";
-            case MeasurementType::RelativeHumidity: return "%";
+            case MeasurementType::Temperature:
+            case MeasurementType::System:
             case MeasurementType::DewPoint: return "°C";
-            case MeasurementType::Pressure: return "hPa";
+            case MeasurementType::RelativeHumidity: return "%";
+            case MeasurementType::Pressure:
             case MeasurementType::SeaLevelPressure: return "hPa";
             case MeasurementType::GasResistance: return "Ohm";
             case MeasurementType::CO2: return "ppm";
             case MeasurementType::Illuminance: return "lux";
-            case MeasurementType::Particles03: return "#";
-            case MeasurementType::Particles05: return "#";
-            case MeasurementType::Particles10: return "#";
-            case MeasurementType::Particles25: return "#";
-            case MeasurementType::Particles50: return "#";
+            case MeasurementType::Particles03:
+            case MeasurementType::Particles05:
+            case MeasurementType::Particles10:
+            case MeasurementType::Particles25:
+            case MeasurementType::Particles50:
             case MeasurementType::Particles100: return "#";
-            case MeasurementType::PM10Concentration: return "ug/m^3";
-            case MeasurementType::PM25Concentration: return "ug/m^3";
+            case MeasurementType::PM10Concentration:
+            case MeasurementType::PM25Concentration:
             case MeasurementType::PM100Concentration: return "ug/m^3";
             case MeasurementType::VocIndex: return "";
             case MeasurementType::Rssi: return "dBm";
             case MeasurementType::Channel: return "";
-            case MeasurementType::System: return "°C";
             case MeasurementType::FreeHeap: return "kB";
             case MeasurementType::Uptime: return "s";
             case MeasurementType::Time: return "ms";
