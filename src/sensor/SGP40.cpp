@@ -40,7 +40,7 @@ namespace Sensor {
 #ifdef ARDUINO
         int32_t vocIndex = (temperature && relativeHumidity)
             ? sgp.measureVocIndex(std::get<float>(temperature->value), std::get<float>(relativeHumidity->value))
-            : sgp.measureVocIndex();
+            : -1;
 
         if (vocIndex >= 0) {
             reading.measurements.push_back({MeasurementType::VocIndex, vocIndex, getType(), false});
