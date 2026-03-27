@@ -37,6 +37,7 @@ namespace Sensor {
         DewPoint,
         Pressure,
         SeaLevelPressure,
+        GasResistance,
         CO2,
         Illuminance,
         Particles03,
@@ -64,6 +65,7 @@ namespace Sensor {
             case MeasurementType::DewPoint: return "dew point";
             case MeasurementType::Pressure: return "pressure";
             case MeasurementType::SeaLevelPressure: return "sea level pressure";
+            case MeasurementType::GasResistance: return "gas resistance";
             case MeasurementType::CO2: return "CO2";
             case MeasurementType::Illuminance: return "illuminance";
             case MeasurementType::Particles03: return "particles_03";
@@ -93,6 +95,7 @@ namespace Sensor {
             case MeasurementType::DewPoint: return "°C";
             case MeasurementType::Pressure: return "hPa";
             case MeasurementType::SeaLevelPressure: return "hPa";
+            case MeasurementType::GasResistance: return "Ohm";
             case MeasurementType::CO2: return "ppm";
             case MeasurementType::Illuminance: return "lux";
             case MeasurementType::Particles03: return "#";

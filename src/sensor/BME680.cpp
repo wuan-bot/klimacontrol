@@ -48,10 +48,12 @@ namespace Sensor {
             float temperature = bme->temperature;
             float relative_humidity = bme->humidity;
             float stationPressure = bme->pressure / 100.0f;
+            float gasResistance = bme->gas_resistance;
             reading.measurements.push_back({MeasurementType::Temperature, temperature, getType(), false});
             reading.measurements.push_back({MeasurementType::RelativeHumidity, relative_humidity, getType(), false});
             reading.measurements.push_back({MeasurementType::DewPoint, calcDewPoint(temperature, relative_humidity), getType(), true});
             reading.measurements.push_back({MeasurementType::Pressure, stationPressure, getType(), false});
+            reading.measurements.push_back({MeasurementType::GasResistance, gasResistance, getType(), false});
 
             if (config.elevation > 0.0f) {
                 float seaLevel = calcSeaLevelPressure(stationPressure, temperature, config.elevation);
