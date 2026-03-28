@@ -22,6 +22,9 @@ namespace Constants {
     
     // GitHub repository name
     constexpr const char* GITHUB_REPO = "klima";
+    
+    // Default WiFi TX power (wifi_power_t raw value, default 13 dBm)
+    constexpr uint8_t DEFAULT_WIFI_POWER = 68;
 };
 
 #endif //KLIMACONTROL_CONSTANTS_H

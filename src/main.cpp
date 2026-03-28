@@ -115,28 +115,30 @@ void setup() {
     sensorController.setControlEnabled(deviceConfig.temperature_control_enabled);
 
 #ifdef ARDUINO
-    esp_pm_config_esp32s2_t pm_config = {
-        .max_freq_mhz = 80,
-        .min_freq_mhz = 10,
-        .light_sleep_enable = true
-    };
-    esp_pm_configure(&pm_config);
+    // esp_pm_config_esp32s2_t pm_config = {
+    //     .max_freq_mhz = 80,
+    //     .min_freq_mhz = 10,
+    //     .light_sleep_enable = true
+    // };
+    // esp_pm_configure(&pm_config);
 #endif
 
-    try {
-        sensorMonitor.startTask();
-    } catch (const std::exception &e) {
-        Serial.printf("Error starting sensor monitor task: %s\r\n", e.what());
-    } catch (...) {
-        Serial.println("Unknown error starting sensor monitor task");
-    }
-
+    Serial.println("Starting network task");
     try {
         network.startTask();
     } catch (const std::exception &e) {
         Serial.printf("Error starting network task: %s\r\n", e.what());
     } catch (...) {
         Serial.println("Unknown error starting network task");
+    }
+
+    Serial.println("Starting sensor task");
+    try {
+        sensorMonitor.startTask();
+    } catch (const std::exception &e) {
+        Serial.printf("Error starting sensor monitor task: %s\r\n", e.what());
+    } catch (...) {
+        Serial.println("Unknown error starting sensor monitor task");
     }
 
     // Configure task watchdog timer (30s timeout, panic on trigger)

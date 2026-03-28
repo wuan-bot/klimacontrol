@@ -120,6 +120,7 @@ void Network::startSTA(const char *ssid, const char *password) {
 
     // Set WiFi mode explicitly
     WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(true);
 
     // Disable WiFi power save for best reception (matches CircuitPython default)
     WiFi.setSleep(WIFI_PS_MAX_MODEM);
@@ -339,7 +340,16 @@ void Network::configureUsingAPMode() {
             if (wl_status != WL_CONNECTED) {
                 if (!wifiReconnecting) {
                     Serial.println("WiFi disconnected - reconnecting ...");
-                    WiFi.reconnect();
+                    
+                    // Try to reconnect with the original credentials if simple reconnect fails
+                    if (wifiReconnectFailures > 0 && (wifiReconnectFailures % 3 == 0)) {
+                        Serial.println("Falling back to WiFi.begin() for reconnection");
+                        Config::WiFiConfig wifiConfig = config.loadWiFiConfig();
+                        WiFi.begin(wifiConfig.ssid, wifiConfig.password);
+                    } else {
+                        WiFi.reconnect();
+                    }
+                    
                     wifiReconnecting = true;
                     wifiReconnectStart = now;
                 } else if (now - wifiReconnectStart >= WIFI_RECONNECT_TIMEOUT_MS) {
@@ -347,6 +357,7 @@ void Network::configureUsingAPMode() {
                     Serial.printf("WiFi reconnect timed out (%u/%u)\r\n",
                                   wifiReconnectFailures, MAX_WIFI_RECONNECT_FAILURES);
                     wifiReconnecting = false;
+                    
                     if (wifiReconnectFailures >= MAX_WIFI_RECONNECT_FAILURES) {
                         Serial.println("Too many WiFi reconnect failures - restarting...");
                         vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -361,24 +372,29 @@ void Network::configureUsingAPMode() {
                 wifiReconnectFailures = 0;
             }
 
-            // NTP update - guard against epoch 0 causing uint32_t underflow
+            // NTP update
             uint32_t currentEpoch = ntpClient.getEpochTime();
-            if (currentEpoch > 0 && lastNtpUpdate > 0
-                    && currentEpoch - lastNtpUpdate > 3600) {
-                bool result = ntpClient.update();
-                Serial.print("NTP update: ");
-                Serial.print(ntpClient.getFormattedTime());
-                Serial.print(" - ");
-                Serial.println(result ? "success" : "failed");
-                if (result) {
-                    lastNtpUpdate = ntpClient.getEpochTime();
+            static constexpr uint32_t NTP_UPDATE_INTERVAL_S = 3600;
+
+            if (currentEpoch > 0) {
+                // Already synced, check for periodic update
+                if (lastNtpUpdate == 0 || currentEpoch - lastNtpUpdate >= NTP_UPDATE_INTERVAL_S) {
+                    bool result = ntpClient.update();
+                    if (result) {
+                        lastNtpUpdate = ntpClient.getEpochTime();
+                        Serial.print("NTP update: ");
+                        Serial.println(ntpClient.getFormattedTime());
+                    } else {
+                        Serial.println("NTP update failed");
+                    }
                 }
-            } else if (currentEpoch == 0 && lastNtpUpdate == 0
-                       && now - lastNtpRetry >= NTP_UNSYNCED_RETRY_MS) {
+            } else if (now - lastNtpRetry >= NTP_UNSYNCED_RETRY_MS) {
                 // NTP not yet synced - retry at most once per minute
                 lastNtpRetry = now;
                 if (ntpClient.update()) {
                     lastNtpUpdate = ntpClient.getEpochTime();
+                    Serial.print("NTP initial sync: ");
+                    Serial.println(ntpClient.getFormattedTime());
                 }
             }
 

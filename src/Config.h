@@ -82,8 +82,8 @@ namespace Config {
      * Energy configuration structure
      */
     struct EnergyConfig {
-        uint8_t wifi_power; // wifi_power_t raw value, default 52 (13 dBm)
-        EnergyConfig() : wifi_power(52) {}
+        uint8_t wifi_power; // wifi_power_t raw value, default Constants::DEFAULT_WIFI_POWER (13 dBm)
+        EnergyConfig() : wifi_power(Constants::DEFAULT_WIFI_POWER) {}
     };
 
     /**

@@ -276,14 +276,14 @@ namespace Config {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, true);
 
-        energyConfig.wifi_power = prefs.getUChar(ENERGY_WIFI_PW, 52);
+        energyConfig.wifi_power = prefs.getUChar(ENERGY_WIFI_PW, Constants::DEFAULT_WIFI_POWER);
 
         prefs.end();
 
         // Validate wifi_power is one of the known values
         uint8_t wp = energyConfig.wifi_power;
         if (wp != 8 && wp != 34 && wp != 52 && wp != 68 && wp != 80) {
-            energyConfig.wifi_power = 52;
+            energyConfig.wifi_power = Constants::DEFAULT_WIFI_POWER;
         }
 #endif
 
