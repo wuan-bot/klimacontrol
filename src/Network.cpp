@@ -118,21 +118,17 @@ void Network::startSTA(const char *ssid, const char *password) {
     WiFi.disconnect(true);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    // Set WiFi mode explicitly
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
-
-    // Disable WiFi power save for best reception (matches CircuitPython default)
-    WiFi.setSleep(WIFI_PS_MAX_MODEM);
+    WiFi.setSleep(WIFI_PS_NONE);
 
     // Apply WiFi TX power from energy config
     Config::EnergyConfig energyConfig = config.loadEnergyConfig();
     WiFi.setTxPower(static_cast<wifi_power_t>(energyConfig.wifi_power));
 
     Serial.println("WiFi Configuration:");
-    Serial.printf("  Power save: MIN_MODEM\r\n");
     Serial.printf("  TX Power: %d (raw wifi_power_t)\r\n", WiFi.getTxPower());
-    Serial.printf("  Sleep Mode: %d (1=MIN_MODEM)\r\n", WiFi.getSleep());
+    Serial.printf("  Sleep Mode: %d (0=NONE)\r\n", WiFi.getSleep());
 
     WiFi.begin(ssid, password);
 
