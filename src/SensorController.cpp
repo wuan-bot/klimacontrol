@@ -1,4 +1,5 @@
 #include "SensorController.h"
+#include "sensor/DeviceSensor.h"
 #include <algorithm>
 #include <cmath>
 
@@ -26,6 +27,11 @@ SensorController::SensorController(Config::ConfigManager &config)
 
 void SensorController::begin() {
     Serial.println("SensorController: Beginning sensor initialization...");
+    
+    sortSensors();
+
+    // add local device metrics sensor (RSSI, chip temp, free heap, uptime)
+    sensors.push_back(std::make_unique<Sensor::DeviceSensor>());
 
     // Initialize all sensors
     for (auto &sensor : sensors) {
@@ -40,8 +46,6 @@ void SensorController::begin() {
     }
 
     Serial.printf("SensorController: Found %u sensors total\r\n", sensors.size());
-
-    sortSensors();
 
     // Load configuration
     targetTemperature = 22.0f;

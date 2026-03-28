@@ -20,10 +20,8 @@
 #include "sensor/VEML7700.h"
 #include "sensor/DPS310.h"
 #include "sensor/BH1750.h"
-#include "sensor/DeviceSensor.h"
 #include "SensorController.h"
 #include "task/SensorMonitor.h"
-#include "StatusLed.h"
 
 #ifdef ARDUINO
 #include <esp_task_wdt.h>
@@ -102,9 +100,6 @@ void setup() {
         }
     }
 
-    // Add device metrics sensor (RSSI, chip temp, free heap, uptime)
-    sensorController.addSensor(std::make_unique<Sensor::DeviceSensor>());
-    Serial.println("Device sensor added to controller");
 #endif
 
     // Initialize sensor controller
