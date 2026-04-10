@@ -55,15 +55,14 @@ void Network::configureMDNS() {
         bool deviceNameIsNotDeviceId = strcmp(deviceConfig.device_name, deviceConfig.device_id) != 0;
         bool hasCustomName = (deviceNameNotEmpty && deviceNameIsNotDeviceId);
 
-        String instanceName;
         if (hasCustomName) {
-            instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_name);
+            mdnsInstanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_name);
         } else {
-            instanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_id);
+            mdnsInstanceName = Constants::INSTANCE_NAME_PREFIX + String(deviceConfig.device_id);
         }
 
-        Serial.printf("mDNS instance name: '%s'\r\n", instanceName.c_str());
-        MDNS.setInstanceName(instanceName.c_str());
+        Serial.printf("mDNS instance name: '%s'\r\n", mdnsInstanceName.c_str());
+        MDNS.setInstanceName(mdnsInstanceName.c_str());
 
         MDNS.addService("http", "tcp", 80);
     } else {
@@ -240,14 +239,43 @@ void Network::configureUsingAPMode() {
     }
     Serial.println("Network task configured");
 
-    // Check connection failure count
+    // Check connection failure count — fall back to AP mode after repeated failures
+    static constexpr uint8_t AP_FALLBACK_THRESHOLD = 3;
     uint8_t failures = config.getConnectionFailures();
-    Serial.print("Previous connection failures: ");
-    Serial.println(failures);
+    Serial.printf("Previous connection failures: %u\r\n", failures);
 
-    if (failures >= 3) {
-        Serial.println("Too many connection failures - resetting counter and retrying STA");
+    if (failures >= AP_FALLBACK_THRESHOLD) {
+        // Temporarily open AP so the user can reconfigure WiFi credentials.
+        // If nobody reconfigures within the timeout, restart back into STA to
+        // retry the original credentials (handles temporary WLAN outages).
         config.resetConnectionFailures();
+
+        static constexpr unsigned long AP_FALLBACK_TIMEOUT_MS = 5UL * 60 * 1000; // 5 minutes
+        Serial.printf("Too many connection failures - opening AP for %lu s\r\n",
+                      AP_FALLBACK_TIMEOUT_MS / 1000);
+
+        startAP();
+        webServer = std::make_unique<ConfigWebServerManager>(config, *this, sensorController, sensorMonitor);
+        webServer->begin();
+
+        unsigned long apStart = millis();
+        while (!config.isConfigured() && (millis() - apStart < AP_FALLBACK_TIMEOUT_MS)) {
+            esp_task_wdt_reset();
+            captivePortal.handleClient();
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+
+        captivePortal.end();
+        webServer.reset();
+
+        if (config.isConfigured()) {
+            Serial.println("New configuration received - restarting...");
+        } else {
+            Serial.println("AP fallback timed out - restarting to retry STA...");
+        }
+
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        ESP.restart();
     }
 
     // Load WiFi configuration
@@ -260,12 +288,9 @@ void Network::configureUsingAPMode() {
 
     // Check if connection succeeded
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("Failed to connect - incrementing failure counter");
         uint8_t newFailures = config.incrementConnectionFailures();
-        Serial.print("New failure count: ");
-        Serial.println(newFailures);
-
-        Serial.println("Restarting...");
+        Serial.printf("Failed to connect (failure %u/%u) - restarting...\r\n",
+                      newFailures, AP_FALLBACK_THRESHOLD);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         ESP.restart();
     }
@@ -291,11 +316,7 @@ void Network::configureUsingAPMode() {
     unsigned long lastSecond = millis();
     unsigned long lastDiagnostics = millis();
     unsigned long lastNtpRetry = 0; // millis() of last NTP retry when unsynced
-    uint8_t wifiReconnectFailures = 0;
-    bool wifiReconnecting = false;
-    unsigned long wifiReconnectStart = 0;
-    static constexpr uint8_t MAX_WIFI_RECONNECT_FAILURES = 10;
-    static constexpr unsigned long WIFI_RECONNECT_TIMEOUT_MS = 30000;
+    bool wasConnected = true;  // Track WiFi state transitions for mDNS re-advertisement
     static constexpr uint32_t MIN_FREE_HEAP_BYTES = 16384; // 16 KB
     static constexpr unsigned long DIAGNOSTICS_INTERVAL_MS = 300000; // 5 minutes
     static constexpr unsigned long NTP_UNSYNCED_RETRY_MS = 60000; // 1 minute
@@ -326,47 +347,20 @@ void Network::configureUsingAPMode() {
         if (now - lastSecond >= 1000) {
             lastSecond = now;
 
-            auto wl_status = WiFi.status();
+            // WiFi state tracking — auto-reconnect is handled by WiFi.setAutoReconnect(true)
+            bool isConnected = WiFi.status() == WL_CONNECTED;
             if (now - lastCheck > 1100) {
-                Serial.printf("WiFi status: %d delayed %lu\r\n", wl_status, now - lastCheck);
+                Serial.printf("WiFi status: %d delayed %lu\r\n", WiFi.status(), now - lastCheck);
             }
             lastCheck = now;
 
-            // Non-blocking WiFi reconnection
-            if (wl_status != WL_CONNECTED) {
-                if (!wifiReconnecting) {
-                    Serial.println("WiFi disconnected - reconnecting ...");
-                    
-                    // Try to reconnect with the original credentials if simple reconnect fails
-                    if (wifiReconnectFailures > 0 && (wifiReconnectFailures % 3 == 0)) {
-                        Serial.println("Falling back to WiFi.begin() for reconnection");
-                        Config::WiFiConfig wifiConfig = config.loadWiFiConfig();
-                        WiFi.begin(wifiConfig.ssid, wifiConfig.password);
-                    } else {
-                        WiFi.reconnect();
-                    }
-                    
-                    wifiReconnecting = true;
-                    wifiReconnectStart = now;
-                } else if (now - wifiReconnectStart >= WIFI_RECONNECT_TIMEOUT_MS) {
-                    wifiReconnectFailures++;
-                    Serial.printf("WiFi reconnect timed out (%u/%u)\r\n",
-                                  wifiReconnectFailures, MAX_WIFI_RECONNECT_FAILURES);
-                    wifiReconnecting = false;
-                    
-                    if (wifiReconnectFailures >= MAX_WIFI_RECONNECT_FAILURES) {
-                        Serial.println("Too many WiFi reconnect failures - restarting...");
-                        vTaskDelay(500 / portTICK_PERIOD_MS);
-                        ESP.restart();
-                    }
-                }
-            } else {
-                if (wifiReconnecting) {
-                    Serial.printf("WiFi reconnected after %lu ms\r\n", now - wifiReconnectStart);
-                    wifiReconnecting = false;
-                }
-                wifiReconnectFailures = 0;
+            if (!wasConnected && isConnected) {
+                Serial.printf("WiFi reconnected (IP: %s)\r\n", WiFi.localIP().toString().c_str());
+                configureMDNS();
+            } else if (wasConnected && !isConnected) {
+                Serial.println("WiFi disconnected - waiting for auto-reconnect");
             }
+            wasConnected = isConnected;
 
             // NTP update
             uint32_t currentEpoch = ntpClient.getEpochTime();

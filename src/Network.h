@@ -50,6 +50,7 @@ private:
     uint32_t lastMqttPublish;
     CaptivePortal captivePortal;
     TaskHandle_t taskHandle = nullptr;
+    String mdnsInstanceName;  // Must outlive MDNS.setInstanceName() call
 
     /**
      * Generate mDNS hostname from device ID

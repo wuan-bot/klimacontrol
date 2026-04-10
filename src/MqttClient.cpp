@@ -47,6 +47,12 @@ void MqttClient::begin(const Config::MqttConfig& mqttConfig) {
     applyServer();
 
 #ifdef ARDUINO
+    // Cap TCP connect/read timeout to prevent blocking the network task
+    wifiClient.setTimeout(3);  // seconds
+    mqttClient.setSocketTimeout(3);  // seconds
+#endif
+
+#ifdef ARDUINO
     Serial.printf("MQTT: Initialized (enabled=%d, host=%s, prefix=%s)\r\n",
                   config.enabled, config.host, config.prefix);
 #endif
