@@ -95,11 +95,18 @@ void MqttClient::loop() {
     if (now - lastConnectAttempt < RECONNECT_INTERVAL_MS) return;
     lastConnectAttempt = now;
 
-    ESP_LOGI(TAG, "Connecting...");
-
     // Stale socket fix: stop WiFiClient before every connect attempt
     wifiClient.stop();
 
+    // Pre-connect TCP with a short timeout (ms) to avoid blocking the
+    // network task for 7-15s on the default lwIP SYN retransmit timeout.
+    static constexpr int TCP_CONNECT_TIMEOUT_MS = 3000;
+    if (!wifiClient.connect(config.host, config.port, TCP_CONNECT_TIMEOUT_MS)) {
+        ESP_LOGW(TAG, "TCP connect to %s:%u failed", config.host, config.port);
+        return;
+    }
+
+    // TCP is up — now do the MQTT handshake (fast, no TCP wait)
     bool connected;
     if (config.username[0] != '\0') {
         connected = mqttClient.connect(clientId.c_str(), config.username, config.password);
@@ -108,9 +115,10 @@ void MqttClient::loop() {
     }
 
     if (connected) {
-        ESP_LOGI(TAG, "Connected");
+        ESP_LOGI(TAG, "Connected to %s:%u", config.host, config.port);
     } else {
-        ESP_LOGW(TAG, "Connect failed, rc=%d", mqttClient.state());
+        ESP_LOGW(TAG, "MQTT handshake failed, rc=%d", mqttClient.state());
+        wifiClient.stop();
     }
 #endif
 }
