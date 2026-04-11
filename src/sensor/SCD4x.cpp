@@ -1,4 +1,5 @@
 #include "SCD4x.h"
+#include "Log.h"
 
 namespace Sensor {
 
@@ -7,7 +8,7 @@ namespace Sensor {
 
     bool SCD4x::begin() {
 #ifdef ARDUINO
-        Serial.println("SCD4x: Initializing sensor...");
+        ESP_LOGI("sensor", "SCD4x: Initializing sensor...");
 
         scd.begin(wire, i2cAddress);
         scd.stopPeriodicMeasurement();

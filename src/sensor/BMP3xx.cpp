@@ -1,4 +1,5 @@
 #include "BMP3xx.h"
+#include "Log.h"
 
 namespace Sensor {
 
@@ -7,7 +8,7 @@ namespace Sensor {
 
     bool BMP3xx::begin() {
 #ifdef ARDUINO
-        Serial.println("BMP3xx: Initializing sensor...");
+        ESP_LOGI("sensor", "BMP3xx: Initializing sensor...");
 
         if (!bmp.begin_I2C(i2cAddress, &wire)) {
             return false;
