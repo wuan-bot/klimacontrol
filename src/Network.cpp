@@ -421,14 +421,14 @@ void Network::publishMeasurements(const std::vector<Sensor::Measurement>& measur
     if (!mqttClient || !mqttClient->isConnected()) return;
 
     uint32_t epoch = getCurrentEpoch();
-    Config::MqttConfig mqttConfig = config.loadMqttConfig();
+    const char* prefix = mqttClient->getPrefix();
 
     uint32_t succeeded = 0;
     uint32_t failed = 0;
 
     for (const auto& m : measurements) {
         char topic[128];
-        snprintf(topic, sizeof(topic), "%s/%s", mqttConfig.prefix, Sensor::measurementTypeLabel(m.type));
+        snprintf(topic, sizeof(topic), "%s/%s", prefix, Sensor::measurementTypeLabel(m.type));
 
         char payload[256];
         if (auto* i = std::get_if<int32_t>(&m.value)) {

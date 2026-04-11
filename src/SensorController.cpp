@@ -25,12 +25,14 @@ SensorController::SensorController(Config::ConfigManager &config)
 #ifdef ARDUINO
       dataMutex(xSemaphoreCreateMutex()),
 #endif
-      targetTemperature(22.0f), controlEnabled(false), lastReadingTime(0) {
+      targetTemperature(22.0f), controlEnabled(false), lastReadingTime(0), elevation(0.0f) {
 }
 
 void SensorController::begin() {
     ESP_LOGI(TAG, "Beginning sensor initialization...");
-    
+
+    elevation = config.loadDeviceConfig().elevation;
+
     sortSensors();
 
     // add local device metrics sensor (RSSI, chip temp, free heap, uptime)
@@ -135,7 +137,7 @@ void SensorController::readSensors() {
     bool anyValid = false;
 
     Sensor::ReadConfig readConfig;
-    readConfig.elevation = config.loadDeviceConfig().elevation;
+    readConfig.elevation = elevation;
 
     // Pre-reserve: each sensor contributes measurementCount() data measurements
     // plus 1 Time measurement added per valid sensor by this function

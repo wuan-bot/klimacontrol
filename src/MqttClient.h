@@ -37,6 +37,7 @@ public:
     bool isConnected();
     bool isEnabled() const;
     uint32_t getIntervalMs() const { return static_cast<uint32_t>(config.interval) * 1000; }
+    const char* getPrefix() const { return config.prefix; }
 
     // Publish statistics
     uint32_t getPublishedCount() const { return publishedCount; }

@@ -39,6 +39,7 @@ private:
     float targetTemperature;
     bool controlEnabled;
     uint32_t lastReadingTime;
+    float elevation; // cached from DeviceConfig
 
 public:
     explicit SensorController(Config::ConfigManager &config);
@@ -90,6 +91,7 @@ public:
     Sensor::Sensor *getSensor(size_t index);
 
     void setTargetTemperature(float temperature);
+    void setElevation(float meters) { elevation = meters; }
     float getTargetTemperature() const { return targetTemperature; }
 
     void setControlEnabled(bool enabled);

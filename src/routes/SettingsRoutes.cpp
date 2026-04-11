@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "Config.h"
+#include "SensorController.h"
 
 #ifdef ARDUINO
 #include <ArduinoJson.h>
@@ -125,6 +126,7 @@ void WebServerManager::setupSettingsRoutes() {
                       Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
                       deviceConfig.elevation = elevation;
                       config.saveDeviceConfig(deviceConfig);
+                      sensorController.setElevation(elevation);
 
                       ESP_LOGI(TAG, "Elevation updated: %.0f m", elevation);
 
