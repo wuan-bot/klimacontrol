@@ -39,8 +39,9 @@ Network network(config, sensorController, sensorMonitor);
 
 void setup() {
     delay(1000);
-    ESP_LOGI(TAG, "Started");
+    // Serial.setDebugOutput(true);
     // config.reset();
+    ESP_LOGI(TAG, "Started");
     config.begin();
 
 #ifdef ARDUINO
