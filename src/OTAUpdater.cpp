@@ -146,6 +146,13 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
         return false;
     }
 
+    // Drain any remaining response body so esp_http_client_close() doesn't
+    // block trying to consume it, then close the connection to free TLS
+    // buffers (~32KB) before we return.
+    char discard[256];
+    while (esp_http_client_read(client.handle, discard, sizeof(discard)) > 0) {}
+    esp_http_client_close(client.handle);
+
     info.version = doc["tag_name"].as<String>();
     info.name = doc["name"].as<String>();
     info.releaseNotes = doc["body"].as<String>();
@@ -163,12 +170,22 @@ bool OTAUpdater::checkForUpdate(const char *owner, const char *repo, FirmwareInf
             info.isValid = true;
             ESP_LOGI(TAG, "Release %s: %s (%zu bytes)",
                      info.version.c_str(), assetName.c_str(), info.size);
-            return true;
+            break;
         }
     }
 
-    info.errorMessage = "No .bin file found in release assets";
-    return false;
+    // Free the JSON document before returning — the release response can be
+    // large and holding it keeps heap pressure high for the subsequent OTA
+    // download which needs all the memory it can get.
+    doc.clear();
+    doc.shrinkToFit();
+
+    if (!info.isValid) {
+        info.errorMessage = "No .bin file found in release assets";
+        return false;
+    }
+
+    return true;
 }
 
 bool OTAUpdater::performUpdate(

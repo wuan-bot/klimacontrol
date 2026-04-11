@@ -868,13 +868,18 @@
         }
     }
 
-    // Load device info on page load
-    loadStatus();
-    loadOTAStatus();
-    loadSensorConfig();
-    loadMqttConfig();
-    loadSyslogConfig();
-    loadEnergyConfig();
+    // Load device info on page load — run sequentially to avoid exhausting
+    // the ESP's limited TCP socket pool (default ~10), which would block
+    // later user-triggered requests like OTA check.
+    async function loadAll() {
+        await loadStatus();
+        await loadOTAStatus();
+        await loadSensorConfig();
+        await loadMqttConfig();
+        await loadSyslogConfig();
+        await loadEnergyConfig();
+    }
+    loadAll();
 </script>
 </body>
 </html>
