@@ -1,3 +1,9 @@
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=coverage)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
+
 # Klima-Control
 
 ESP32-based temperature and humidity controller with web interface for monitoring and controlling environmental conditions. Runs on the Adafruit QT Py ESP32-S2 and supports a wide range of I2C sensors for temperature, humidity, pressure, CO2, air quality, light, and VOC monitoring.
