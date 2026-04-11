@@ -8,6 +8,7 @@ ESP32-based temperature and humidity controller with web interface for monitorin
 - **Temperature control** - PID-based temperature control with configurable target
 - **Web interface** - Full control and monitoring from any device on your network
 - **MQTT integration** - Publish sensor data and control commands via MQTT
+- **Remote syslog** - Forward device logs to a remote syslog server (UDP, RFC 3164)
 - **Data logging** - Historical sensor data for trend analysis
 - **Timers & Alarms** - Schedule temperature control actions or notifications
 - **OTA updates** - Update firmware over WiFi from GitHub releases
@@ -98,6 +99,8 @@ pio device monitor
 | `/api/ota/check` | GET | Check for firmware updates on GitHub |
 | `/api/ota/update` | POST | Download and install firmware update |
 | `/api/ota/status` | GET | Current OTA status and firmware version |
+| `/api/syslog` | GET | Get syslog configuration |
+| `/api/syslog` | POST | Update syslog configuration |
 
 ## Configuration
 
@@ -107,6 +110,7 @@ All settings are persisted in ESP32 NVS (Non-Volatile Storage):
 - **Device Config**: Device name, device ID, sensor I2C address
 - **Temperature Config**: Target temperature, control enabled flag
 - **MQTT Config**: Broker address, port, topics (if enabled)
+- **Syslog Config**: Syslog server address, port, enabled flag
 
 ## Project Structure
 
@@ -119,6 +123,8 @@ src/
   SensorDataLogger.h/cpp   # Historical data logging
   WebServerManager.h/cpp   # Web interface and REST API
   MqttClient.h/cpp         # MQTT connectivity
+  SyslogOutput.h/cpp       # UDP syslog log forwarding
+  Log.h                    # Project-level logging macros
   StatusLed.h/cpp          # Status LED control
   TimerScheduler.h/cpp     # Timer and alarm management
   TouchController.h/cpp    # Capacitive touch input
@@ -173,6 +179,16 @@ Optional MQTT support for:
 - Publishing control state and target temperature
 - Subscribing to commands to enable/disable control
 - Remote monitoring and integration with home automation systems
+
+## Syslog
+
+Device logs can be forwarded to a remote syslog server via UDP (RFC 3164). Configure the syslog target in the web interface under Settings or via the `/api/syslog` endpoint.
+
+- **Protocol**: UDP syslog (RFC 3164)
+- **Facility**: user (1)
+- **Hostname**: uses the device's mDNS hostname (e.g. `klima-aabbcc`)
+- **Severity mapping**: E=error(3), W=warning(4), I=info(6), D=debug(7)
+- **Zero overhead when disabled**: no UDP socket allocated, inline `isActive()` check
 
 ## Over-the-Air (OTA) Updates
 
