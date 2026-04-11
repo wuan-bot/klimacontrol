@@ -65,7 +65,7 @@ namespace Config {
             host[0] = '\0';
             username[0] = '\0';
             password[0] = '\0';
-            strcpy(prefix, "sensors");
+            strlcpy(prefix, "sensors", sizeof(prefix));
         }
     };
 
@@ -98,6 +98,11 @@ namespace Config {
             host[0] = '\0';
         }
     };
+
+    // Validation functions — pure C++, testable on native builds
+    void validateDeviceConfig(DeviceConfig &config);
+    void validateMqttConfig(MqttConfig &config);
+    void validateEnergyConfig(EnergyConfig &config);
 
     /**
      * Configuration Manager
