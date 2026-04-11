@@ -9,9 +9,10 @@
 
 class SyslogOutput {
 public:
-    static void begin(const Config::SyslogConfig& config, const char* deviceName);
+    static void begin(const Config::SyslogConfig& config);
     static void end();
     static void setConfig(const Config::SyslogConfig& config);
+    static void setHostname(const char* name);
     static bool isActive() { return active; }
 
     // Send a log line to the syslog server. Called from the _KLIMA_LOG macro.

@@ -287,10 +287,13 @@ void Network::configureUsingAPMode() {
 
     ESP_LOGI(TAG, "Webserver started - system ready, free heap: %u bytes", ESP.getFreeHeap());
 
+    // Set syslog hostname early so it's available if syslog is enabled later via API
+    String syslogHostname = generateHostname();
+    SyslogOutput::setHostname(syslogHostname.c_str());
+
     // Start syslog forwarding if configured
     Config::SyslogConfig syslogConfig = config.loadSyslogConfig();
-    String syslogHostname = generateHostname();
-    SyslogOutput::begin(syslogConfig, syslogHostname.c_str());
+    SyslogOutput::begin(syslogConfig);
 
     // Main loop - NTP updates and touch control
     auto lastNtpUpdate = ntpClient.getEpochTime();

@@ -10,13 +10,15 @@ Config::SyslogConfig SyslogOutput::currentConfig{};
 char SyslogOutput::hostname[32] = "";
 bool SyslogOutput::active = false;
 
-void SyslogOutput::begin(const Config::SyslogConfig& config, const char* deviceName) {
+void SyslogOutput::setHostname(const char* name) {
+    strlcpy(hostname, name && name[0] ? name : "klima", sizeof(hostname));
+}
+
+void SyslogOutput::begin(const Config::SyslogConfig& config) {
     if (active) return;
 
     currentConfig = config;
     if (!config.enabled || config.host[0] == '\0') return;
-
-    strlcpy(hostname, deviceName && deviceName[0] ? deviceName : "klima", sizeof(hostname));
 
     if (!mutex) {
         mutex = xSemaphoreCreateMutex();
@@ -37,7 +39,7 @@ void SyslogOutput::setConfig(const Config::SyslogConfig& config) {
         xSemaphoreGive(mutex);
 
         if (!wasEnabled && config.enabled && !active) {
-            begin(config, hostname);
+            begin(config);
         } else if (wasEnabled && !config.enabled && active) {
             end();
         }
@@ -45,7 +47,7 @@ void SyslogOutput::setConfig(const Config::SyslogConfig& config) {
         // No mutex yet — just update config
         currentConfig = config;
         if (config.enabled && !active) {
-            begin(config, hostname);
+            begin(config);
         }
     }
 }
