@@ -2,6 +2,7 @@
 #include "sensor/DeviceSensor.h"
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -80,14 +81,10 @@ void SensorController::sortSensors() {
             bool satisfied = true;
 
             for (uint8_t r = 0; r < reqs.count && satisfied; ++r) {
-                bool found = false;
-                for (auto& s : sorted) {
-                    Sensor::TypeSpan prov = s->provides();
-                    for (uint8_t p = 0; p < prov.count; ++p) {
-                        if (prov.data[p] == reqs.data[r]) { found = true; break; }
-                    }
-                    if (found) break;
-                }
+                bool found = std::any_of(sorted.begin(), sorted.end(), [&reqs, r](const auto& s) {
+                    const Sensor::TypeSpan prov = s->provides();
+                    return std::find(prov.data, prov.data + prov.count, reqs.data[r]) != prov.data + prov.count;
+                });
                 if (!found) satisfied = false;
             }
 
@@ -141,12 +138,10 @@ void SensorController::readSensors() {
 
     // Pre-reserve: each sensor contributes measurementCount() data measurements
     // plus 1 Time measurement added per valid sensor by this function
-    size_t totalExpected = 0;
-    for (const auto &sensor : sensors) {
-        if (sensor) {
-            totalExpected += sensor->measurementCount() + 1;
-        }
-    }
+    size_t totalExpected = std::accumulate(sensors.begin(), sensors.end(), size_t(0),
+        [](size_t sum, const auto &sensor) {
+            return sum + (sensor ? sensor->measurementCount() + 1 : 0);
+        });
     allMeasurements.reserve(totalExpected);
 
     for (auto &sensor : sensors) {
@@ -370,11 +365,9 @@ uint32_t SensorController::getTimeSinceLastReading() const {
 }
 
 bool SensorController::hasConnectedSensors() const {
-    for (const auto &sensor : sensors) {
-        if (sensor && sensor->getStatus() == Sensor::SensorStatus::Online) {
-            return true;
-        }
-    }
-    return false;
+    return std::any_of(sensors.begin(), sensors.end(),
+        [](const auto &sensor) {
+            return sensor && sensor->getStatus() == Sensor::SensorStatus::Online;
+        });
 }
 

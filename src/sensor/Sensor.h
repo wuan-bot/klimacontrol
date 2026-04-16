@@ -1,6 +1,7 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -151,10 +152,9 @@ namespace Sensor {
     };
 
     inline const Measurement *findMeasurement(const std::vector<Measurement> &measurements, MeasurementType type) {
-        for (const auto &m: measurements) {
-            if (m.type == type) return &m;
-        }
-        return nullptr;
+        auto it = std::find_if(measurements.begin(), measurements.end(),
+            [type](const Measurement &m) { return m.type == type; });
+        return (it != measurements.end()) ? &(*it) : nullptr;
     }
 
     struct SensorReading {

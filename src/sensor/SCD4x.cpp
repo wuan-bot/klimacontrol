@@ -50,8 +50,6 @@ namespace Sensor {
             reading.valid = false;
         }
 #else
-        float t = 22.0f;
-        float rh = 45.0f;
         reading.measurements.push_back({MeasurementType::CO2, static_cast<int32_t>(420), getType(), false});
 
         reading.valid = true;

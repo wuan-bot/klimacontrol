@@ -55,10 +55,10 @@ namespace Sensor {
         }
 #else
         float stationPressure = 1013.25f;
-        float temperature = 22.0f;
         reading.measurements.push_back({MeasurementType::Pressure, stationPressure, getType(), false});
 
         if (config.elevation > 0.0f) {
+            float temperature = 22.0f;
             float seaLevel = calcSeaLevelPressure(stationPressure, temperature, config.elevation);
             reading.measurements.push_back({MeasurementType::SeaLevelPressure, seaLevel, getType(), true});
         }
