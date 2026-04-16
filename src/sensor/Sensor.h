@@ -228,9 +228,9 @@ namespace Sensor {
         [[nodiscard]] uint32_t getLastInitAttempt() const { return lastInitAttempt; }
         [[nodiscard]] uint8_t getConsecutiveReadFailures() const { return consecutiveReadFailures; }
 
-        [[nodiscard]] virtual TypeSpan provides() const { return {nullptr, 0}; }
-        [[nodiscard]] virtual TypeSpan requires() const { return {nullptr, 0}; }
-        [[nodiscard]] virtual size_t measurementCount() const { return provides().count; }
+        [[nodiscard]] virtual TypeSpan providesMeasurements() const { return {nullptr, 0}; }
+        [[nodiscard]] virtual TypeSpan requiresMeasurements() const { return {nullptr, 0}; }
+        [[nodiscard]] virtual size_t measurementCount() const { return providesMeasurements().count; }
     };
 
     /**

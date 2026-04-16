@@ -32,7 +32,7 @@ namespace {
         const char* getType() const override { return "Mock"; }
         bool isConnected() override { return sensorStatus == SensorStatus::Online; }
 
-        [[nodiscard]] TypeSpan provides() const override {
+        [[nodiscard]] TypeSpan providesMeasurements() const override {
             static constexpr MeasurementType types[] = {
                 MeasurementType::Temperature
             };
@@ -195,9 +195,9 @@ void test_default_provides_empty() {
         bool isConnected() override { return true; }
     };
     MinimalSensor sensor;
-    TEST_ASSERT_EQUAL(0, sensor.provides().count);
-    TEST_ASSERT_NULL(sensor.provides().data);
-    TEST_ASSERT_EQUAL(0, sensor.requires().count);
+    TEST_ASSERT_EQUAL(0, sensor.providesMeasurements().count);
+    TEST_ASSERT_NULL(sensor.providesMeasurements().data);
+    TEST_ASSERT_EQUAL(0, sensor.requiresMeasurements().count);
     TEST_ASSERT_EQUAL(0, sensor.measurementCount());
 }
 

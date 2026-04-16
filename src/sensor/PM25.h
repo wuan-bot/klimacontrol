@@ -24,7 +24,7 @@ namespace Sensor {
         bool begin() override;
         SensorReading read() override;
         [[nodiscard]] const char* getType() const override { return type(); }
-        [[nodiscard]] TypeSpan provides() const override {
+        [[nodiscard]] TypeSpan providesMeasurements() const override {
             static constexpr MeasurementType types[] = {
                 MeasurementType::Particles03, MeasurementType::Particles05,
                 MeasurementType::Particles10, MeasurementType::Particles25,

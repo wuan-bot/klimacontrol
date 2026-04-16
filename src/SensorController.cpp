@@ -77,7 +77,7 @@ void SensorController::sortSensors() {
         for (size_t i = 0; i < sensors.size(); ++i) {
             if (placed[i]) continue;
 
-            Sensor::TypeSpan reqs = sensors[i]->requires();
+            Sensor::TypeSpan reqs = sensors[i]->requiresMeasurements();
             bool satisfied = true;
 
             for (uint8_t r = 0; r < reqs.count && satisfied; ++r) {

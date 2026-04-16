@@ -164,7 +164,7 @@ namespace {
         ::Sensor::SensorReading read() override { return {}; }
         const char* getType() const override { return "Test3"; }
         bool isConnected() override { return true; }
-        [[nodiscard]] ::Sensor::TypeSpan provides() const override {
+        [[nodiscard]] ::Sensor::TypeSpan providesMeasurements() const override {
             static constexpr ::Sensor::MeasurementType types[] = {
                 ::Sensor::MeasurementType::Temperature,
                 ::Sensor::MeasurementType::RelativeHumidity,
@@ -179,7 +179,7 @@ namespace {
         ::Sensor::SensorReading read() override { return {}; }
         const char* getType() const override { return "Test1"; }
         bool isConnected() override { return true; }
-        [[nodiscard]] ::Sensor::TypeSpan provides() const override {
+        [[nodiscard]] ::Sensor::TypeSpan providesMeasurements() const override {
             static constexpr ::Sensor::MeasurementType types[] = {
                 ::Sensor::MeasurementType::Illuminance
             };
@@ -192,7 +192,7 @@ namespace {
         ::Sensor::SensorReading read() override { return {}; }
         const char* getType() const override { return "Test9"; }
         bool isConnected() override { return true; }
-        [[nodiscard]] ::Sensor::TypeSpan provides() const override {
+        [[nodiscard]] ::Sensor::TypeSpan providesMeasurements() const override {
             static constexpr ::Sensor::MeasurementType types[] = {
                 ::Sensor::MeasurementType::Particles03,
                 ::Sensor::MeasurementType::Particles05,
@@ -212,19 +212,19 @@ namespace {
 void test_measurement_count_matches_provides_count_three() {
     ThreeMeasurementSensor sensor;
     TEST_ASSERT_EQUAL(3u, sensor.measurementCount());
-    TEST_ASSERT_EQUAL(sensor.provides().count, sensor.measurementCount());
+    TEST_ASSERT_EQUAL(sensor.providesMeasurements().count, sensor.measurementCount());
 }
 
 void test_measurement_count_matches_provides_count_one() {
     OneMeasurementSensor sensor;
     TEST_ASSERT_EQUAL(1u, sensor.measurementCount());
-    TEST_ASSERT_EQUAL(sensor.provides().count, sensor.measurementCount());
+    TEST_ASSERT_EQUAL(sensor.providesMeasurements().count, sensor.measurementCount());
 }
 
 void test_measurement_count_matches_provides_count_nine() {
     NineMeasurementSensor sensor;
     TEST_ASSERT_EQUAL(9u, sensor.measurementCount());
-    TEST_ASSERT_EQUAL(sensor.provides().count, sensor.measurementCount());
+    TEST_ASSERT_EQUAL(sensor.providesMeasurements().count, sensor.measurementCount());
 }
 
 // Mirrors the allMeasurements.reserve() logic in SensorController::readSensors():
