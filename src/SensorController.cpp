@@ -165,10 +165,10 @@ void SensorController::readSensors() {
 
         if (reading.valid) {
             for (const auto &m : reading.measurements) {
-                if (auto* i = std::get_if<int32_t>(&m.value)) {
+                if (std::holds_alternative<int32_t>(m.value)) {
                     ESP_LOGD(TAG, "%s: %s=%d %s (%u ms)",
                              sensor->getType(), Sensor::measurementTypeLabel(m.type),
-                             *i, Sensor::measurementTypeUnit(m.type), readTime);
+                             std::get<int32_t>(m.value), Sensor::measurementTypeUnit(m.type), readTime);
                 } else {
                     ESP_LOGD(TAG, "%s: %s=%.1f %s (%u ms)",
                              sensor->getType(), Sensor::measurementTypeLabel(m.type),

@@ -23,7 +23,7 @@ namespace Config {
         bool configured;
         uint8_t connection_failures; // Track consecutive connection failures
 
-        WiFiConfig() : configured(false), connection_failures(0), ssid(""), password("") {
+        WiFiConfig() : ssid(""), password(""), configured(false), connection_failures(0) {
         }
     };
 
@@ -40,12 +40,12 @@ namespace Config {
         bool temperature_control_enabled; // Temperature control enabled
         float elevation; // Meters above sea level, for sea-level pressure calculation
 
-        DeviceConfig() : sensor_i2c_address(0x44), // Default SHT4x address
+        DeviceConfig() : device_id(""),
+                         device_name(""),
+                         sensor_i2c_address(0x44), // Default SHT4x address
                          target_temperature(22.0f),
                          temperature_control_enabled(false),
-                         elevation(0.0f),
-                         device_id(""),
-                         device_name("") {
+                         elevation(0.0f) {
         }
     };
 
@@ -121,7 +121,9 @@ namespace Config {
 
 
         bool restartRequested = false;
+#ifdef ARDUINO
         uint32_t restartAt = 0;
+#endif
 
     public:
         ConfigManager();

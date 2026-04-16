@@ -34,6 +34,9 @@ enum class NetworkMode {
 
 class Network {
 private:
+    Config::ConfigManager &config;
+    SensorController &sensorController;
+    Task::SensorMonitor &sensorMonitor;
     NetworkMode mode;
 
 #ifdef ARDUINO
@@ -41,9 +44,6 @@ private:
     NTPClient ntpClient;
 #endif
 
-    Config::ConfigManager &config;
-    SensorController &sensorController;
-    Task::SensorMonitor &sensorMonitor;
     std::unique_ptr<WebServerManager> webServer;
     std::unique_ptr<StatusLed> statusLed;
     std::unique_ptr<MqttClient> mqttClient;

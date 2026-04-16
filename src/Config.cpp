@@ -6,13 +6,13 @@
 #include "Log.h"
 #endif
 
-static const char* TAG = "config";
+[[maybe_unused]] static const char* TAG = "config";
 
 namespace Config {
     ConfigManager::ConfigManager() {
     }
 
-    void ConfigManager::requestRestart(uint32_t delayMs) {
+    void ConfigManager::requestRestart([[maybe_unused]] uint32_t delayMs) {
 #ifdef ARDUINO
         restartAt = millis() + delayMs;
         restartRequested = true;
@@ -75,7 +75,7 @@ namespace Config {
         return config;
     }
 
-    void ConfigManager::saveWiFiConfig(const WiFiConfig &config) {
+    void ConfigManager::saveWiFiConfig([[maybe_unused]] const WiFiConfig &config) {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false); // Read-write mode
 
@@ -126,7 +126,7 @@ namespace Config {
         return config;
     }
 
-    void ConfigManager::saveDeviceConfig(const DeviceConfig &config) {
+    void ConfigManager::saveDeviceConfig([[maybe_unused]] const DeviceConfig &config) {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false); // Read-write mode
 
@@ -213,7 +213,7 @@ namespace Config {
         return sensorConfig;
     }
 
-    void ConfigManager::saveSensorConfig(const SensorConfig &config) {
+    void ConfigManager::saveSensorConfig([[maybe_unused]] const SensorConfig &config) {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false); // Read-write mode
 
@@ -260,7 +260,7 @@ namespace Config {
         return mqttConfig;
     }
 
-    void ConfigManager::saveMqttConfig(const MqttConfig &config) {
+    void ConfigManager::saveMqttConfig([[maybe_unused]] const MqttConfig &config) {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false); // Read-write mode
 
@@ -301,7 +301,7 @@ namespace Config {
         return energyConfig;
     }
 
-    void ConfigManager::saveEnergyConfig(const EnergyConfig &config) {
+    void ConfigManager::saveEnergyConfig([[maybe_unused]] const EnergyConfig &config) {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false);
 
@@ -326,7 +326,7 @@ namespace Config {
         return config;
     }
 
-    void ConfigManager::saveSyslogConfig(const SyslogConfig &config) {
+    void ConfigManager::saveSyslogConfig([[maybe_unused]] const SyslogConfig &config) {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false);
 

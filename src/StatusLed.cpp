@@ -24,7 +24,7 @@ void StatusLed::setState(LedState newState) {
     update(); // Apply immediately
 }
 
-void StatusLed::showColor(uint32_t color) {
+void StatusLed::showColor([[maybe_unused]] uint32_t color) {
 #ifdef ARDUINO
     if (color == lastShownColor) return;
     lastShownColor = color;

@@ -27,10 +27,11 @@
 static const char* TAG = "net";
 
 Network::Network(Config::ConfigManager &config, SensorController &sensorController, Task::SensorMonitor &sensorMonitor)
-    : config(config), sensorController(sensorController), sensorMonitor(sensorMonitor), mode(NetworkMode::NONE), webServer(nullptr), statusLed(nullptr), lastMqttPublish(0)
+    : config(config), sensorController(sensorController), sensorMonitor(sensorMonitor), mode(NetworkMode::NONE)
 #ifdef ARDUINO
       , ntpClient(wifiUdp)
 #endif
+      , webServer(nullptr), statusLed(nullptr), lastMqttPublish(0)
 {
 }
 

@@ -32,15 +32,15 @@ public:
  */
 class WebServerManager {
 protected:
-#ifdef ARDUINO
-    AsyncWebServer server;
-    AccessLogger logging;
-#endif
-
     Config::ConfigManager &config;
     Network &network;
     SensorController &sensorController;
     Task::SensorMonitor &sensorMonitor;
+
+#ifdef ARDUINO
+    AsyncWebServer server;
+    AccessLogger logging;
+#endif
 
     /**
      * Setup shared routes for assets (CSS, favicon, etc.)

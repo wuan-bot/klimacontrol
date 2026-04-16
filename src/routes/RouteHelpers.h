@@ -5,19 +5,19 @@
 #include <ESPAsyncWebServer.h>
 
 // Content type constants
-static const char* CONTENT_TYPE_HTML = "text/html";
-static const char* CONTENT_TYPE_CSS = "text/css";
-static const char* CONTENT_TYPE_SVG = "image/svg+xml";
-static const char* CONTENT_TYPE_JSON = "application/json";
+inline const char* CONTENT_TYPE_HTML = "text/html";
+inline const char* CONTENT_TYPE_CSS = "text/css";
+inline const char* CONTENT_TYPE_SVG = "image/svg+xml";
+inline const char* CONTENT_TYPE_JSON = "application/json";
 
 // JSON Key constants
-static const char* JSON_KEY_SUCCESS = "success";
-static const char* JSON_KEY_VALUE = "value";
-static const char* JSON_KEY_NAME = "name";
+inline const char* JSON_KEY_SUCCESS = "success";
+inline const char* JSON_KEY_VALUE = "value";
+inline const char* JSON_KEY_NAME = "name";
 
 // Common JSON Responses
-static const char* JSON_RESPONSE_SUCCESS = "{\"success\":true}";
-static const char* JSON_RESPONSE_ERROR_INVALID_JSON = R"({"success":false,"error":"Invalid JSON"})";
+inline const char* JSON_RESPONSE_SUCCESS = "{\"success\":true}";
+inline const char* JSON_RESPONSE_ERROR_INVALID_JSON = R"({"success":false,"error":"Invalid JSON"})";
 
 inline void sendGzippedResponse(AsyncWebServerRequest *request, const char *contentType, const uint8_t *data, size_t len) {
     AsyncWebServerResponse *response = request->beginResponse(200, contentType, data, len);

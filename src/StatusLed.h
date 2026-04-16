@@ -32,7 +32,9 @@ private:
 #endif
     LedState state;
     float progress;                // 0.0 = green, 1.0 = red (MQTT interval progress)
+#ifdef ARDUINO
     uint32_t lastShownColor = 0xFFFFFFFF; // init to impossible value to force first write
+#endif
 
     void showColor(uint32_t color);
 

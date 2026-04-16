@@ -9,10 +9,11 @@
 static const char* TAG = "mqtt";
 
 MqttClient::MqttClient()
-    : clientId("klima-" + DeviceId::getDeviceId()), configured(false), lastConnectAttempt(0)
+    : config(), clientId("klima-" + DeviceId::getDeviceId()), configured(false)
 #ifdef ARDUINO
-      , mqttClient(wifiClient)
+      , wifiClient(), mqttClient(wifiClient)
 #endif
+      , lastConnectAttempt(0)
 {
 }
 
@@ -114,7 +115,7 @@ void MqttClient::loop() {
 #endif
 }
 
-bool MqttClient::publish(const char* topic, const char* payload) {
+bool MqttClient::publish([[maybe_unused]] const char* topic, [[maybe_unused]] const char* payload) {
 #ifdef ARDUINO
     if (!mqttClient.connected()) return false;
     return mqttClient.publish(topic, payload);

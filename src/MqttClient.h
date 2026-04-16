@@ -23,13 +23,13 @@ inline bool isIpAddress(const char* host) {
 
 class MqttClient {
 private:
+    Config::MqttConfig config;
+    String clientId;
+    bool configured;
 #ifdef ARDUINO
     WiFiClient wifiClient;
     PubSubClient mqttClient;
 #endif
-    Config::MqttConfig config;
-    String clientId;
-    bool configured;
     uint32_t lastConnectAttempt;
     static constexpr uint32_t RECONNECT_INTERVAL_MS = 5000;
 
