@@ -4,9 +4,9 @@
 #ifdef ARDUINO
 #include <Arduino.h>
 #include "Log.h"
-#endif
 
 static const char* TAG = "mqtt";
+#endif
 
 MqttClient::MqttClient()
     : config(), clientId("klima-" + DeviceId::getDeviceId()), configured(false)
