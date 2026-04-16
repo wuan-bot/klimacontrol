@@ -65,8 +65,8 @@ void SensorController::addSensor(std::unique_ptr<Sensor::Sensor> sensor) {
 }
 
 void SensorController::sortSensors() {
-    // Topological sort: repeatedly pick sensors whose requires() are satisfied
-    // by already-placed sensors' provides(). Simple quadratic — only 3-5 sensors.
+    // Topological sort: repeatedly pick sensors whose requiresMeasurements() are satisfied
+    // by already-placed sensors' providesMeasurements(). Simple quadratic — only 3-5 sensors.
     std::vector<std::unique_ptr<Sensor::Sensor>> sorted;
     sorted.reserve(sensors.size());
 
@@ -82,7 +82,7 @@ void SensorController::sortSensors() {
 
             for (uint8_t r = 0; r < reqs.count && satisfied; ++r) {
                 bool found = std::any_of(sorted.begin(), sorted.end(), [&reqs, r](const auto& s) {
-                    const Sensor::TypeSpan prov = s->provides();
+                    const Sensor::TypeSpan prov = s->providesMeasurements();
                     return std::find(prov.data, prov.data + prov.count, reqs.data[r]) != prov.data + prov.count;
                 });
                 if (!found) satisfied = false;
