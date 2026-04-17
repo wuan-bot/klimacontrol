@@ -5,8 +5,10 @@
 #include <vector>
 
 struct I2CDevice {
-    uint8_t address;
-    const char* knownType;  // nullptr if unknown
+    uint8_t address = 0x00;
+    const char* knownType = nullptr;  // nullptr if unknown
+
+    I2CDevice() = default;
 };
 
 struct SensorInfo {

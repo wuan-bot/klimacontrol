@@ -6,11 +6,10 @@
 #include "Log.h"
 #endif
 
-[[maybe_unused]] static const char* TAG = "config";
+[[maybe_unused]] static constexpr const char* TAG = "config";
 
 namespace Config {
-    ConfigManager::ConfigManager() {
-    }
+    ConfigManager::ConfigManager() = default;
 
     void ConfigManager::requestRestart([[maybe_unused]] uint32_t delayMs) {
 #ifdef ARDUINO

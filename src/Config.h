@@ -18,55 +18,43 @@ namespace Config {
      * WiFi configuration structure
      */
     struct WiFiConfig {
-        char ssid[64];
-        char password[64];
-        bool configured;
-        uint8_t connection_failures; // Track consecutive connection failures
+        char ssid[64] = "";
+        char password[64] = "";
+        bool configured = false;
+        uint8_t connection_failures = 0; // Track consecutive connection failures
 
-        WiFiConfig() : ssid(""), password(""), configured(false), connection_failures(0) {
-        }
+        WiFiConfig() = default;
     };
 
     /**
      * Device configuration structure
      */
     struct DeviceConfig {
-        char device_id[16]; // e.g., "AABBCC"
-        char device_name[32]; // Custom device name
+        char device_id[16] = ""; // e.g., "AABBCC"
+        char device_name[32] = ""; // Custom device name
 
         // Sensor and temperature control configuration
-        uint8_t sensor_i2c_address; // Default I2C address for sensors
-        float target_temperature; // Target temperature for control
-        bool temperature_control_enabled; // Temperature control enabled
-        float elevation; // Meters above sea level, for sea-level pressure calculation
+        uint8_t sensor_i2c_address = 0x44; // Default I2C address for sensors
+        float target_temperature = 22.0f; // Target temperature for control
+        bool temperature_control_enabled = false; // Temperature control enabled
+        float elevation = 0.0f; // Meters above sea level, for sea-level pressure calculation
 
-        DeviceConfig() : device_id(""),
-                         device_name(""),
-                         sensor_i2c_address(0x44), // Default SHT4x address
-                         target_temperature(22.0f),
-                         temperature_control_enabled(false),
-                         elevation(0.0f) {
-        }
+        DeviceConfig() = default;
     };
 
     /**
      * MQTT configuration structure
      */
     struct MqttConfig {
-        char host[64];
-        uint16_t port;
-        char username[64];
-        char password[64];
-        char prefix[64]; // topic prefix, e.g. "sensors/bedroom"
-        uint16_t interval; // publish interval in seconds
-        bool enabled;
+        char host[64] = "";
+        uint16_t port = 1883;
+        char username[64] = "";
+        char password[64] = "";
+        char prefix[64] = "sensors"; // topic prefix, e.g. "sensors/bedroom"
+        uint16_t interval = 15; // publish interval in seconds
+        bool enabled = false;
 
-        MqttConfig() : port(1883), interval(15), enabled(false) {
-            host[0] = '\0';
-            username[0] = '\0';
-            password[0] = '\0';
-            strlcpy(prefix, "sensors", sizeof(prefix));
-        }
+        MqttConfig() = default;
     };
 
     /**
@@ -74,29 +62,27 @@ namespace Config {
      * Stores sensor assignments as a compact string like "44=SHT4x,77=BME680,59=SGP40"
      */
     struct SensorConfig {
-        char assignments[128]; // e.g. "44=SHT4x,77=BME680,59=SGP40"
-        SensorConfig() { assignments[0] = '\0'; }
+        char assignments[128] = ""; // e.g. "44=SHT4x,77=BME680,59=SGP40"
+        SensorConfig() = default;
     };
 
     /**
      * Energy configuration structure
      */
     struct EnergyConfig {
-        uint8_t wifi_power; // wifi_power_t raw value, default Constants::DEFAULT_WIFI_POWER (13 dBm)
-        EnergyConfig() : wifi_power(Constants::DEFAULT_WIFI_POWER) {}
+        uint8_t wifi_power = Constants::DEFAULT_WIFI_POWER; // wifi_power_t raw value, default Constants::DEFAULT_WIFI_POWER (13 dBm)
+        EnergyConfig() = default;
     };
 
     /**
      * Syslog configuration structure
      */
     struct SyslogConfig {
-        char host[64];
-        uint16_t port;
-        bool enabled;
+        char host[64] = "";
+        uint16_t port = 514;
+        bool enabled = false;
 
-        SyslogConfig() : port(514), enabled(false) {
-            host[0] = '\0';
-        }
+        SyslogConfig() = default;
     };
 
     // Validation functions — pure C++, testable on native builds

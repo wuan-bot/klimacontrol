@@ -19,13 +19,15 @@
  * Firmware release information from GitHub
  */
 struct FirmwareInfo {
-    String version; // Tag name (e.g., "v1.0.0")
-    String name; // Release name
-    String downloadUrl; // Direct download link to .bin file
-    size_t size; // File size in bytes
-    String releaseNotes; // Release notes body
-    bool isValid; // Whether the structure contains valid data
-    String errorMessage; // Error description when check fails
+    String version = ""; // Tag name (e.g., "v1.0.0")
+    String name = ""; // Release name
+    String downloadUrl = ""; // Direct download link to .bin file
+    size_t size = 0; // File size in bytes
+    String releaseNotes = ""; // Release notes body
+    bool isValid = false; // Whether the structure contains valid data
+    String errorMessage = ""; // Error description when check fails
+
+    FirmwareInfo() = default;
 };
 
 /**

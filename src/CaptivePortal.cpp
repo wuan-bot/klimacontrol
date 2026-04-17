@@ -5,7 +5,7 @@
 #include "Log.h"
 #endif
 
-static const char* TAG = "portal";
+static constexpr const char* TAG = "portal";
 
 CaptivePortal::CaptivePortal() {
 }

@@ -159,11 +159,10 @@ namespace Sensor {
 
     struct SensorReading {
         std::vector<Measurement> measurements;
-        uint32_t timestamp;
-        bool valid;
+        uint32_t timestamp = 0;
+        bool valid = false;
 
-        SensorReading() : timestamp(0), valid(false) {
-        }
+        SensorReading() = default;
     };
 
     /**
