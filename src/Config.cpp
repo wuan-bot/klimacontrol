@@ -95,6 +95,9 @@ namespace Config {
         if (std::isnan(config.elevation) || config.elevation < -500.0f || config.elevation > 9000.0f) {
             config.elevation = 0.0f;
         }
+        if (config.sensor_i2c_address < MIN_SENSOR_I2C_ADDRESS || config.sensor_i2c_address > MAX_SENSOR_I2C_ADDRESS) {
+            config.sensor_i2c_address = DEFAULT_SENSOR_I2C_ADDRESS;
+        }
     }
 
     DeviceConfig ConfigManager::loadDeviceConfig() {
@@ -116,6 +119,7 @@ namespace Config {
         deviceConfig.target_temperature = prefs.getFloat(TARGET_TEMPERATURE, 22.0f);
         deviceConfig.temperature_control_enabled = prefs.getBool(TEMPERATURE_CONTROL_ENABLED, false);
         deviceConfig.elevation = prefs.getFloat(ELEVATION, 0.0f);
+        deviceConfig.sensor_i2c_address = prefs.getUChar(SENSOR_I2C_ADDRESS, DEFAULT_SENSOR_I2C_ADDRESS);
 
         prefs.end();
 #endif
@@ -127,21 +131,24 @@ namespace Config {
     }
 
     void ConfigManager::saveDeviceConfig([[maybe_unused]] const DeviceConfig &config) {
+        // Validate before persisting to keep NVS consistent
+        DeviceConfig validated = config;
+        validateDeviceConfig(validated);
+
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false); // Read-write mode
-
-        prefs.putString("device_name", config.device_name);
-
-        prefs.putFloat(TARGET_TEMPERATURE, config.target_temperature);
-        prefs.putBool(TEMPERATURE_CONTROL_ENABLED, config.temperature_control_enabled);
-        prefs.putFloat(ELEVATION, config.elevation);
-
+        prefs.putString("device_name", validated.device_name);
+        prefs.putFloat(TARGET_TEMPERATURE, validated.target_temperature);
+        prefs.putBool(TEMPERATURE_CONTROL_ENABLED, validated.temperature_control_enabled);
+        prefs.putFloat(ELEVATION, validated.elevation);
+        prefs.putUChar(SENSOR_I2C_ADDRESS, validated.sensor_i2c_address);
         prefs.end();
 #endif
+
         // Also update in-memory cache
-        deviceConfig = config;
+        deviceConfig = validated;
     }
-    
+
     void ConfigManager::updateDeviceName([[maybe_unused]] const char* device_name) {
 #ifdef ARDUINO
         prefs.begin(NAMESPACE, false);
@@ -184,6 +191,19 @@ namespace Config {
         prefs.end();
 #endif
         deviceConfig.elevation = elevation;
+    }
+
+    void ConfigManager::updateSensorI2CAddress(uint8_t address) {
+        // Validate: valid 7-bit I2C addresses are 0x08-0x77 (reserved: 0x00-0x07, 0x78-0x7F)
+        if (address < MIN_SENSOR_I2C_ADDRESS || address > MAX_SENSOR_I2C_ADDRESS) {
+            address = DEFAULT_SENSOR_I2C_ADDRESS;
+        }
+#ifdef ARDUINO
+        prefs.begin(NAMESPACE, false);
+        prefs.putUChar(SENSOR_I2C_ADDRESS, address);
+        prefs.end();
+#endif
+        deviceConfig.sensor_i2c_address = address;
     }
 
     void ConfigManager::reset() {

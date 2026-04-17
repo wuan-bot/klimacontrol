@@ -14,6 +14,11 @@ using String = std::string;
 #include "Constants.h"
 
 namespace Config {
+    // Valid 7-bit I2C address range (0x00-0x07 and 0x78-0x7F are reserved)
+    constexpr uint8_t MIN_SENSOR_I2C_ADDRESS = 0x08;
+    constexpr uint8_t MAX_SENSOR_I2C_ADDRESS = 0x77;
+    constexpr uint8_t DEFAULT_SENSOR_I2C_ADDRESS = 0x44;
+
     /**
      * WiFi configuration structure
      */
@@ -34,7 +39,7 @@ namespace Config {
         char device_name[32] = ""; // Custom device name
 
         // Sensor and temperature control configuration
-        uint8_t sensor_i2c_address = 0x44; // Default I2C address for sensors
+        uint8_t sensor_i2c_address = DEFAULT_SENSOR_I2C_ADDRESS; // Default I2C address for sensors
         float target_temperature = 22.0f; // Target temperature for control
         bool temperature_control_enabled = false; // Temperature control enabled
         float elevation = 0.0f; // Meters above sea level, for sea-level pressure calculation
@@ -104,6 +109,7 @@ namespace Config {
         static constexpr const char *TEMPERATURE_CONTROL_ENABLED = "temperature_control_enabled";
         static constexpr const char *ELEVATION = "elevation";
         static constexpr const char *ENERGY_WIFI_PW = "energy_wifi_pw";
+        static constexpr const char *SENSOR_I2C_ADDRESS = "sensor_i2c_address";
 
         // In-memory cache of device config — always read from here, never maintain separate copies
         DeviceConfig deviceConfig;
@@ -188,6 +194,7 @@ namespace Config {
         void updateTargetTemperature(float temperature);
         void updateTemperatureControlEnabled(bool enabled);
         void updateElevation(float elevation);
+        void updateSensorI2CAddress(uint8_t address);
 
         /**
          * Factory reset - clear all stored configuration

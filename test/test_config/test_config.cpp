@@ -20,7 +20,7 @@ void test_wifi_config_defaults() {
 
 void test_device_config_defaults() {
     Config::DeviceConfig config;
-    TEST_ASSERT_EQUAL(0x44, config.sensor_i2c_address);
+    TEST_ASSERT_EQUAL(Config::DEFAULT_SENSOR_I2C_ADDRESS, config.sensor_i2c_address);
     TEST_ASSERT_FLOAT_WITHIN(0.01f, 22.0f, config.target_temperature);
     TEST_ASSERT_FALSE(config.temperature_control_enabled);
     TEST_ASSERT_FLOAT_WITHIN(0.01f, 0.0f, config.elevation);
@@ -140,6 +140,42 @@ void test_validate_device_config_elevation_at_bounds() {
     TEST_ASSERT_FLOAT_WITHIN(0.01f, 9000.0f, config.elevation);
 }
 
+void test_validate_device_config_i2c_address_valid_unchanged() {
+    Config::DeviceConfig config;
+    config.sensor_i2c_address = Config::DEFAULT_SENSOR_I2C_ADDRESS;
+    Config::validateDeviceConfig(config);
+    TEST_ASSERT_EQUAL(Config::DEFAULT_SENSOR_I2C_ADDRESS, config.sensor_i2c_address);
+
+    config.sensor_i2c_address = 0x10;
+    Config::validateDeviceConfig(config);
+    TEST_ASSERT_EQUAL(0x10, config.sensor_i2c_address);
+}
+
+void test_validate_device_config_i2c_address_too_low() {
+    Config::DeviceConfig config;
+    config.sensor_i2c_address = 0x03;
+    Config::validateDeviceConfig(config);
+    TEST_ASSERT_EQUAL(Config::DEFAULT_SENSOR_I2C_ADDRESS, config.sensor_i2c_address);
+}
+
+void test_validate_device_config_i2c_address_too_high() {
+    Config::DeviceConfig config;
+    config.sensor_i2c_address = 0x78;
+    Config::validateDeviceConfig(config);
+    TEST_ASSERT_EQUAL(Config::DEFAULT_SENSOR_I2C_ADDRESS, config.sensor_i2c_address);
+}
+
+void test_validate_device_config_i2c_address_at_bounds() {
+    Config::DeviceConfig config;
+    config.sensor_i2c_address = Config::MIN_SENSOR_I2C_ADDRESS;
+    Config::validateDeviceConfig(config);
+    TEST_ASSERT_EQUAL(Config::MIN_SENSOR_I2C_ADDRESS, config.sensor_i2c_address);
+
+    config.sensor_i2c_address = Config::MAX_SENSOR_I2C_ADDRESS;
+    Config::validateDeviceConfig(config);
+    TEST_ASSERT_EQUAL(Config::MAX_SENSOR_I2C_ADDRESS, config.sensor_i2c_address);
+}
+
 // --- validateMqttConfig ---
 
 void test_validate_mqtt_config_valid_values_unchanged() {
@@ -245,6 +281,10 @@ int runUnityTests() {
     RUN_TEST(test_validate_device_config_elevation_too_low);
     RUN_TEST(test_validate_device_config_elevation_too_high);
     RUN_TEST(test_validate_device_config_elevation_at_bounds);
+    RUN_TEST(test_validate_device_config_i2c_address_valid_unchanged);
+    RUN_TEST(test_validate_device_config_i2c_address_too_low);
+    RUN_TEST(test_validate_device_config_i2c_address_too_high);
+    RUN_TEST(test_validate_device_config_i2c_address_at_bounds);
     // MqttConfig validation
     RUN_TEST(test_validate_mqtt_config_valid_values_unchanged);
     RUN_TEST(test_validate_mqtt_config_zero_port_reset);
