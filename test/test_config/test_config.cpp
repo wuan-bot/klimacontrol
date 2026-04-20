@@ -261,6 +261,14 @@ void test_validate_energy_config_max_uint8_reset() {
     TEST_ASSERT_EQUAL(Constants::DEFAULT_WIFI_POWER, config.wifi_power);
 }
 
+void test_get_device_id() {
+    Config::ConfigManager config;
+    String id = config.getDeviceId();
+    TEST_ASSERT_EQUAL(6, id.length());
+    // In native mode it should return "000000"
+    TEST_ASSERT_EQUAL_STRING("000000", id.c_str());
+}
+
 int runUnityTests() {
     UNITY_BEGIN();
     // Struct defaults
@@ -270,6 +278,7 @@ int runUnityTests() {
     RUN_TEST(test_sensor_config_defaults);
     RUN_TEST(test_energy_config_defaults);
     RUN_TEST(test_syslog_config_defaults);
+    RUN_TEST(test_get_device_id);
     // DeviceConfig validation
     RUN_TEST(test_validate_device_config_valid_values_unchanged);
     RUN_TEST(test_validate_device_config_nan_temperature_reset);

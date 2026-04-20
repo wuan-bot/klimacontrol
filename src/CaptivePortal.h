@@ -23,7 +23,7 @@ private:
     bool running = false;
 
 public:
-    CaptivePortal();
+    CaptivePortal() = default;
 
     /**
      * Start the captive portal

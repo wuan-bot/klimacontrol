@@ -17,12 +17,14 @@ namespace DeviceId {
      */
     inline String getDeviceId() {
         uint64_t mac = ESP.getEfuseMac();
-        uint8_t mac_bytes[6];
-        memcpy(mac_bytes, &mac, 6);
+        char id[7];
 
-        char id[16];
-        snprintf(id, sizeof(id), "%02X%02X%02X",
-                 mac_bytes[3], mac_bytes[4], mac_bytes[5]);
+        // Extract last 3 bytes from MAC (bytes 3, 4, 5 of uint64_t)
+        uint8_t b1 = (mac >> 24) & 0xFF;
+        uint8_t b2 = (mac >> 32) & 0xFF;
+        uint8_t b3 = (mac >> 40) & 0xFF;
+
+        snprintf(id, sizeof(id), "%02X%02X%02X", b1, b2, b3);
         return String(id);
     }
 

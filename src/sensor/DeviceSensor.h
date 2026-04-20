@@ -11,6 +11,7 @@ namespace Sensor {
      */
     class DeviceSensor : public Sensor {
     public:
+        DeviceSensor() = default;
         static const char* type() { return "ESP32"; }
 
         bool begin() override;

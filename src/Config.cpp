@@ -225,7 +225,7 @@ namespace Config {
                  mac_bytes[3], mac_bytes[4], mac_bytes[5]);
         return String(id);
 #else
-        return String("klima-000000");
+        return String("000000");
 #endif
     }
 

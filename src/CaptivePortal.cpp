@@ -7,8 +7,6 @@
 
 static constexpr const char* TAG = "portal";
 
-CaptivePortal::CaptivePortal() {
-}
 
 void CaptivePortal::begin() {
 #ifdef ARDUINO
