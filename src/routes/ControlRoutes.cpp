@@ -17,7 +17,8 @@ void WebServerManager::setupControlRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      JsonDocument doc;
+                      auto doc_ptr = std::make_unique<JsonDocument>();
+                      JsonDocument& doc = *doc_ptr;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {

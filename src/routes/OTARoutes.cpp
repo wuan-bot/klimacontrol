@@ -17,7 +17,8 @@ void WebServerManager::setupOTARoutes() {
 #ifdef ARDUINO
     // GET /api/ota/check - Check for firmware updates
     server.on("/api/ota/check", HTTP_GET, [](AsyncWebServerRequest *request) {
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
 
         FirmwareInfo info;
         bool releaseFound = OTAUpdater::checkForUpdate(OTA_GITHUB_OWNER, OTA_GITHUB_REPO, info);
@@ -56,7 +57,8 @@ void WebServerManager::setupOTARoutes() {
                   }
 
                   if (index + len == total) {
-                      JsonDocument doc;
+                      auto doc_ptr = std::make_unique<JsonDocument>();
+                      JsonDocument& doc = *doc_ptr;
                       deserializeJson(doc, data, len);
 
                       String downloadUrl = doc["download_url"] | "";
@@ -85,7 +87,8 @@ void WebServerManager::setupOTARoutes() {
 
     // GET /api/ota/status - Get OTA status
     server.on("/api/ota/status", HTTP_GET, [](AsyncWebServerRequest *request) {
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
 
         doc["firmware_version"] = FIRMWARE_VERSION;
         doc["build_date"] = FIRMWARE_BUILD_DATE;
@@ -118,7 +121,8 @@ void WebServerManager::setupOTARoutes() {
     server.on("/api/ota/confirm", HTTP_POST, [](AsyncWebServerRequest *request) {
         bool success = OTAUpdater::confirmBoot();
 
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
         doc[JSON_KEY_SUCCESS] = success;
         doc["message"] = success ? "Boot confirmed, rollback disabled" : "Failed to confirm boot";
 

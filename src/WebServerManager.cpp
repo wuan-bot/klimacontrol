@@ -108,7 +108,8 @@ void WebServerManager::handleWiFiConfig(AsyncWebServerRequest *request, uint8_t 
     // Only process the first chunk (index == 0)
     if (index == 0) {
         // Parse JSON body
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
         DeserializationError error = deserializeJson(doc, data, len);
 
         if (error) {
@@ -148,7 +149,8 @@ void WebServerManager::handleWiFiConfig(AsyncWebServerRequest *request, uint8_t 
         hostname.toLowerCase();
 
         // Send success response with hostname
-        JsonDocument responseDoc;
+        auto response_doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& responseDoc = *response_doc_ptr;
         responseDoc["success"] = true;
         responseDoc["hostname"] = hostname + ".local";
 

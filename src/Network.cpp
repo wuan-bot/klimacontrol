@@ -139,6 +139,9 @@ void Network::startSTA(const char *ssid, const char *password) {
     while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
         vTaskDelay(500 / portTICK_PERIOD_MS);
         attempts++;
+        if (attempts % 5 == 0) {
+            ESP_LOGI(TAG, "Still connecting... (attempt %d/%d)", attempts, maxAttempts);
+        }
     }
 
     if (WiFi.status() == WL_CONNECTED) {
@@ -150,6 +153,7 @@ void Network::startSTA(const char *ssid, const char *password) {
                  WiFi.gatewayIP().toString().c_str(), WiFi.dnsIP().toString().c_str(),
                  WiFi.getTxPower(), WiFi.getSleep(), WiFi.getAutoReconnect());
 
+        ESP_LOGI(TAG, "Configuring mDNS...");
         configureMDNS();
 
         String hostname = generateHostname();
@@ -157,15 +161,18 @@ void Network::startSTA(const char *ssid, const char *password) {
                  Constants::PROJECT_NAME, hostname.c_str(), WiFi.localIP().toString().c_str());
 
         // Start NTP client
+        ESP_LOGI(TAG, "Starting NTP...");
         ntpClient.begin();
         ntpClient.update();
 
         ESP_LOGI(TAG, "NTP time: %s", ntpClient.getFormattedTime().c_str());
 
         // Initialize MQTT client
+        ESP_LOGI(TAG, "Initializing MQTT...");
         mqttClient = std::make_unique<MqttClient>();
         Config::MqttConfig mqttConfig = config.loadMqttConfig();
         mqttClient->begin(mqttConfig);
+        ESP_LOGI(TAG, "MQTT initialized");
     } else {
         ESP_LOGE(TAG, "WiFi connection failed");
     }
@@ -264,7 +271,9 @@ void Network::configureUsingAPMode() {
     ESP_LOGI(TAG, "WiFi configured - starting STA mode");
 
     // Start Station mode
+    ESP_LOGI(TAG, "Calling startSTA...");
     startSTA(wifiConfig.ssid, wifiConfig.password);
+    ESP_LOGI(TAG, "startSTA finished");
 
     // Check if connection succeeded
     if (WiFi.status() != WL_CONNECTED) {
@@ -283,8 +292,11 @@ void Network::configureUsingAPMode() {
     }
 
     // Create and start operational webserver for STA mode
+    ESP_LOGI(TAG, "Creating OperationalWebServerManager...");
     webServer = std::make_unique<OperationalWebServerManager>(config, *this, sensorController, sensorMonitor);
+    ESP_LOGI(TAG, "Starting webserver...");
     webServer->begin();
+    ESP_LOGI(TAG, "Webserver started");
 
     ESP_LOGI(TAG, "Webserver started - system ready, free heap: %u bytes", ESP.getFreeHeap());
 
@@ -468,7 +480,7 @@ void Network::startTask() {
     xTaskCreate(
         taskWrapper, // Task Function
         "Network", // Task Name
-        18000, // Stack Size
+        20480, // Stack Size (increased from 18000 for stability)
         this, // Parameters
         1, // Priority
         &taskHandle // Task Handle

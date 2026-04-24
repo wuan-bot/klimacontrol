@@ -16,7 +16,8 @@ void WebServerManager::setupStatusRoutes() {
 #ifdef ARDUINO
     // GET /api/status - Get device status
     server.on("/api/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
 
         // Device info
         Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
@@ -65,7 +66,8 @@ void WebServerManager::setupStatusRoutes() {
 
     // GET /api/about - Device information
     server.on("/api/about", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
 
         // Device info
         Config::DeviceConfig deviceConfig = config.loadDeviceConfig();
@@ -126,7 +128,8 @@ void WebServerManager::setupStatusRoutes() {
 
     // GET /api/measurements - Get detailed overview of most recent measurements as a table
     server.on("/api/measurements", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
 
         doc["valid"] = sensorController.isDataValid();
         doc["timestamp"] = sensorController.getLastReadingTimestamp();

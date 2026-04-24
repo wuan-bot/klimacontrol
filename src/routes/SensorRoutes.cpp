@@ -19,7 +19,8 @@ void WebServerManager::setupSensorRoutes() {
     server.on("/api/sensors/config", HTTP_GET, [this](AsyncWebServerRequest *request) {
         Config::SensorConfig sensorConfig = config.loadSensorConfig();
 
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
         JsonArray arr = doc["devices"].to<JsonArray>();
 
         // Parse assignment string "44=SHT4x,77=BME680" into JSON array
@@ -49,7 +50,8 @@ void WebServerManager::setupSensorRoutes() {
     // GET /api/sensors/registry - Get known sensor types and their I2C addresses
     // NOTE: Must be registered before /api/sensors to avoid prefix matching
     server.on("/api/sensors/registry", HTTP_GET, [](AsyncWebServerRequest *request) {
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
 
         size_t registryCount;
         const SensorInfo* registry = I2CScanner::getRegistry(registryCount);
@@ -74,7 +76,8 @@ void WebServerManager::setupSensorRoutes() {
               nullptr,
               [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, [[maybe_unused]] size_t total) {
                   if (index == 0) {
-                      JsonDocument doc;
+                      auto doc_ptr = std::make_unique<JsonDocument>();
+                      JsonDocument& doc = *doc_ptr;
                       DeserializationError error = deserializeJson(doc, data, len);
 
                       if (error) {
@@ -111,7 +114,8 @@ void WebServerManager::setupSensorRoutes() {
 
     // GET /api/sensors - Get sensor information
     server.on("/api/sensors", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        JsonDocument doc;
+        auto doc_ptr = std::make_unique<JsonDocument>();
+        JsonDocument& doc = *doc_ptr;
         JsonArray sensors = doc["sensors"].to<JsonArray>();
 
         for (size_t i = 0; i < sensorController.getSensorCount(); i++) {
