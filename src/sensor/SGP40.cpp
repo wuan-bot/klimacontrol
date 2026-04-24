@@ -36,11 +36,13 @@ namespace Sensor {
 
 #ifdef ARDUINO
         int32_t vocIndex = -1;
-        if (auto* temperature = findMeasurement(prior, MeasurementType::Temperature)) {
-            if (auto* relativeHumidity = findMeasurement(prior, MeasurementType::RelativeHumidity)) {
-                if (temperature && relativeHumidity) {
-                    vocIndex = sgp.measureVocIndex(std::get<float>(temperature->value), std::get<float>(relativeHumidity->value));
-                }
+        auto* temperature = findMeasurement(prior, MeasurementType::Temperature);
+        auto* relativeHumidity = findMeasurement(prior, MeasurementType::RelativeHumidity);
+        if (temperature && relativeHumidity) {
+            const float* tempVal = std::get_if<float>(&temperature->value);
+            const float* humidVal = std::get_if<float>(&relativeHumidity->value);
+            if (tempVal && humidVal) {
+                vocIndex = sgp.measureVocIndex(*tempVal, *humidVal);
             }
         }
 

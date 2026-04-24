@@ -356,6 +356,8 @@ void Network::configureUsingAPMode() {
             if (!wasConnected && isConnected) {
                 ESP_LOGI(TAG, "WiFi reconnected (IP: %s)", WiFi.localIP().toString().c_str());
                 configureMDNS();
+                // Reset MQTT publish timer to avoid burst after reconnection
+                lastMqttPublish = now;
             } else if (wasConnected && !isConnected) {
                 ESP_LOGW(TAG, "WiFi disconnected - waiting for auto-reconnect");
             }
@@ -396,7 +398,7 @@ void Network::configureUsingAPMode() {
                     if (lastMqttPublish == 0) lastMqttPublish = now;
 
                     if (intervalMs > 0 && now >= 60000 && (now - lastMqttPublish >= intervalMs)) {
-                        statusLed->setState(LedState::TRANSMIT_DATA);
+                        if (statusLed) statusLed->setState(LedState::TRANSMIT_DATA);
 
                         lastMqttPublish = now;
                         publishMeasurements(sensorController.getMeasurements());
