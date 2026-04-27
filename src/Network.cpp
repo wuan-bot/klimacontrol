@@ -255,18 +255,16 @@ void Network::configureUsingAPMode() {
             ESP_LOGI(TAG, "New configuration received - restarting...");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             ESP.restart();
+            return; // ensure we do not fall through into the timeout path
         }
 
         // AP fallback timed out — original credentials failed.
-        // Instead of immediately retrying (which would loop if network is still down),
-        // mark the failure and wait before the next attempt. This breaks the
-        // restart-loop pattern where the device cycles AP→STA→fail→AP without pause.
+        // Increment the failure counter so this restart counts toward
+        // the AP fallback threshold (3 failures → 5-minute AP window for reconfiguration).
+        // incrementConnectionFailures() already writes wifi_failures to NVS.
         uint8_t newFailures = config.incrementConnectionFailures();
         ESP_LOGW(TAG, "AP fallback timed out (failure %u/%u) - waiting before retry...",
                  newFailures, AP_FALLBACK_THRESHOLD);
-
-        // Persist failure count so the wait survives the upcoming restart
-        config.saveWiFiConfig(config.loadWiFiConfig());
 
         // Brief pause so the restart isn't instantaneous
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -283,14 +281,10 @@ void Network::configureUsingAPMode() {
 
     // Check if connection succeeded
     if (WiFi.status() != WL_CONNECTED) {
+        // incrementConnectionFailures() already persists wifi_failures to NVS.
         uint8_t newFailures = config.incrementConnectionFailures();
         ESP_LOGW(TAG, "Failed to connect (failure %u/%u) - waiting before retry...",
                  newFailures, AP_FALLBACK_THRESHOLD);
-
-        // Save updated failure count to NVS immediately so a crash during
-        // the delay doesn't lose the count and repeat the same attempt.
-        Config::WiFiConfig wifiConfig = config.loadWiFiConfig();
-        config.saveWiFiConfig(wifiConfig);
 
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         ESP.restart();
