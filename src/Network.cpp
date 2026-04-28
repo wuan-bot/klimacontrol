@@ -255,7 +255,6 @@ void Network::configureUsingAPMode() {
             ESP_LOGI(TAG, "New configuration received - restarting...");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             ESP.restart();
-            return; // ensure we do not fall through into the timeout path
         }
 
         // AP fallback timed out — original credentials failed.
