@@ -114,9 +114,12 @@ void Network::startSTA(const char *ssid, const char *password) {
 #ifdef ARDUINO
     mode = NetworkMode::STA;
 
-    // Disconnect any previous connection
-    WiFi.disconnect(true);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    // Clear any previous WiFi state without sending a disconnect frame.
+    // Calling disconnect(true) sends a deauth frame to the AP, which can cause
+    // AP-side rate limiting or blocklisting when connection attempts fail
+    // repeatedly (e.g., during the restart loop bug).
+    WiFi.disconnect(false);
+    vTaskDelay(50 / portTICK_PERIOD_MS);
 
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
@@ -257,10 +260,19 @@ void Network::configureUsingAPMode() {
 
         if (config.isConfigured()) {
             ESP_LOGI(TAG, "New configuration received - restarting...");
-        } else {
-            ESP_LOGI(TAG, "AP fallback timed out - restarting to retry STA...");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            ESP.restart();
         }
 
+        // AP fallback timed out — original credentials failed.
+        // Increment the failure counter so this restart counts toward
+        // the AP fallback threshold (3 failures → 5-minute AP window for reconfiguration).
+        // incrementConnectionFailures() already writes wifi_failures to NVS.
+        uint8_t newFailures = config.incrementConnectionFailures();
+        ESP_LOGW(TAG, "AP fallback timed out (failure %u/%u) - waiting before retry...",
+                 newFailures, AP_FALLBACK_THRESHOLD);
+
+        // Brief pause so the restart isn't instantaneous
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         ESP.restart();
     }
@@ -277,9 +289,11 @@ void Network::configureUsingAPMode() {
 
     // Check if connection succeeded
     if (WiFi.status() != WL_CONNECTED) {
+        // incrementConnectionFailures() already persists wifi_failures to NVS.
         uint8_t newFailures = config.incrementConnectionFailures();
-        ESP_LOGW(TAG, "Failed to connect (failure %u/%u) - restarting...",
+        ESP_LOGW(TAG, "Failed to connect (failure %u/%u) - waiting before retry...",
                  newFailures, AP_FALLBACK_THRESHOLD);
+
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         ESP.restart();
     }

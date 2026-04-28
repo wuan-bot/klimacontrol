@@ -1,3 +1,4 @@
+[![PlatformIO CI](https://github.com/wuan-bot/klimacontrol/actions/workflows/test.yml/badge.svg)](https://github.com/wuan-bot/klimacontrol/actions/workflows/test.yml)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=coverage)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=wuan_klimacontrol&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=wuan_klimacontrol)
