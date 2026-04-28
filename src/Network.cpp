@@ -268,10 +268,15 @@ void Network::configureUsingAPMode() {
         // Increment the failure counter so this restart counts toward
         // the AP fallback threshold (3 failures → 5-minute AP window for reconfiguration).
         // incrementConnectionFailures() already writes wifi_failures to NVS.
+        // Instead of immediately retrying (which would loop if network is still down),
+        // mark the failure and wait before the next attempt. This breaks the
+        // restart-loop pattern where the device cycles AP→STA→fail→AP without pause.
         uint8_t newFailures = config.incrementConnectionFailures();
         ESP_LOGW(TAG, "AP fallback timed out (failure %u/%u) - waiting before retry...",
                  newFailures, AP_FALLBACK_THRESHOLD);
 
+        // Persist failure count so the wait survives the upcoming restart
+        config.saveWiFiConfig(config.loadWiFiConfig());
         // Brief pause so the restart isn't instantaneous
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         ESP.restart();
@@ -293,6 +298,11 @@ void Network::configureUsingAPMode() {
         uint8_t newFailures = config.incrementConnectionFailures();
         ESP_LOGW(TAG, "Failed to connect (failure %u/%u) - waiting before retry...",
                  newFailures, AP_FALLBACK_THRESHOLD);
+
+        // Save updated failure count to NVS immediately so a crash during
+        // the delay doesn't lose the count and repeat the same attempt.
+        Config::WiFiConfig wifiConfig = config.loadWiFiConfig();
+        config.saveWiFiConfig(wifiConfig);
 
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         ESP.restart();
