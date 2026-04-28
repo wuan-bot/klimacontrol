@@ -50,7 +50,7 @@ namespace Config {
 
     void ConfigManager::markUnconfigured() {
 #ifdef ARDUINO
-        prefs.begin(NAMESPACE, false); // Read-only mode
+        prefs.begin(NAMESPACE, false); // Read-write mode
         prefs.putBool("configured", false);
         prefs.end();
 #endif
