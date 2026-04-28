@@ -142,9 +142,6 @@ void Network::startSTA(const char *ssid, const char *password) {
     while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
         vTaskDelay(500 / portTICK_PERIOD_MS);
         attempts++;
-        if (attempts % 5 == 0) {
-            ESP_LOGI(TAG, "Still connecting... (attempt %d/%d)", attempts, maxAttempts);
-        }
     }
 
     if (WiFi.status() == WL_CONNECTED) {
@@ -156,7 +153,6 @@ void Network::startSTA(const char *ssid, const char *password) {
                  WiFi.gatewayIP().toString().c_str(), WiFi.dnsIP().toString().c_str(),
                  WiFi.getTxPower(), WiFi.getSleep(), WiFi.getAutoReconnect());
 
-        ESP_LOGI(TAG, "Configuring mDNS...");
         configureMDNS();
 
         String hostname = generateHostname();
@@ -164,18 +160,15 @@ void Network::startSTA(const char *ssid, const char *password) {
                  Constants::PROJECT_NAME, hostname.c_str(), WiFi.localIP().toString().c_str());
 
         // Start NTP client
-        ESP_LOGI(TAG, "Starting NTP...");
         ntpClient.begin();
         ntpClient.update();
 
         ESP_LOGI(TAG, "NTP time: %s", ntpClient.getFormattedTime().c_str());
 
         // Initialize MQTT client
-        ESP_LOGI(TAG, "Initializing MQTT...");
         mqttClient = std::make_unique<MqttClient>();
         Config::MqttConfig mqttConfig = config.loadMqttConfig();
         mqttClient->begin(mqttConfig);
-        ESP_LOGI(TAG, "MQTT initialized");
     } else {
         ESP_LOGE(TAG, "WiFi connection failed");
     }
@@ -265,12 +258,15 @@ void Network::configureUsingAPMode() {
         }
 
         // AP fallback timed out — original credentials failed.
-        // Increment the failure counter so this restart counts toward
-        // the AP fallback threshold (3 failures → 5-minute AP window for reconfiguration).
-        // incrementConnectionFailures() already writes wifi_failures to NVS.
+        // Instead of immediately retrying (which would loop if network is still down),
+        // mark the failure and wait before the next attempt. This breaks the
+        // restart-loop pattern where the device cycles AP→STA→fail→AP without pause.
         uint8_t newFailures = config.incrementConnectionFailures();
         ESP_LOGW(TAG, "AP fallback timed out (failure %u/%u) - waiting before retry...",
                  newFailures, AP_FALLBACK_THRESHOLD);
+
+        // Persist failure count so the wait survives the upcoming restart
+        config.saveWiFiConfig(config.loadWiFiConfig());
 
         // Brief pause so the restart isn't instantaneous
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -283,16 +279,18 @@ void Network::configureUsingAPMode() {
     ESP_LOGI(TAG, "WiFi configured - starting STA mode");
 
     // Start Station mode
-    ESP_LOGI(TAG, "Calling startSTA...");
     startSTA(wifiConfig.ssid, wifiConfig.password);
-    ESP_LOGI(TAG, "startSTA finished");
 
     // Check if connection succeeded
     if (WiFi.status() != WL_CONNECTED) {
-        // incrementConnectionFailures() already persists wifi_failures to NVS.
         uint8_t newFailures = config.incrementConnectionFailures();
         ESP_LOGW(TAG, "Failed to connect (failure %u/%u) - waiting before retry...",
                  newFailures, AP_FALLBACK_THRESHOLD);
+
+        // Save updated failure count to NVS immediately so a crash during
+        // the delay doesn't lose the count and repeat the same attempt.
+        Config::WiFiConfig wifiConfig = config.loadWiFiConfig();
+        config.saveWiFiConfig(wifiConfig);
 
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         ESP.restart();
@@ -306,11 +304,8 @@ void Network::configureUsingAPMode() {
     }
 
     // Create and start operational webserver for STA mode
-    ESP_LOGI(TAG, "Creating OperationalWebServerManager...");
     webServer = std::make_unique<OperationalWebServerManager>(config, *this, sensorController, sensorMonitor);
-    ESP_LOGI(TAG, "Starting webserver...");
     webServer->begin();
-    ESP_LOGI(TAG, "Webserver started");
 
     ESP_LOGI(TAG, "Webserver started - system ready, free heap: %u bytes", ESP.getFreeHeap());
 
@@ -370,8 +365,6 @@ void Network::configureUsingAPMode() {
             if (!wasConnected && isConnected) {
                 ESP_LOGI(TAG, "WiFi reconnected (IP: %s)", WiFi.localIP().toString().c_str());
                 configureMDNS();
-                // Reset MQTT publish timer to avoid burst after reconnection
-                lastMqttPublish = now;
             } else if (wasConnected && !isConnected) {
                 ESP_LOGW(TAG, "WiFi disconnected - waiting for auto-reconnect");
             }
@@ -412,7 +405,7 @@ void Network::configureUsingAPMode() {
                     if (lastMqttPublish == 0) lastMqttPublish = now;
 
                     if (intervalMs > 0 && now >= 60000 && (now - lastMqttPublish >= intervalMs)) {
-                        if (statusLed) statusLed->setState(LedState::TRANSMIT_DATA);
+                        statusLed->setState(LedState::TRANSMIT_DATA);
 
                         lastMqttPublish = now;
                         publishMeasurements(sensorController.getMeasurements());
@@ -496,7 +489,7 @@ void Network::startTask() {
     xTaskCreate(
         taskWrapper, // Task Function
         "Network", // Task Name
-        20480, // Stack Size (increased from 18000 for stability)
+        18000, // Stack Size
         this, // Parameters
         1, // Priority
         &taskHandle // Task Handle
