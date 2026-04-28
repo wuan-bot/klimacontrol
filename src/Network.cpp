@@ -198,8 +198,11 @@ void Network::configureUsingAPMode() {
     ESP_LOGI(TAG, "Scheduling restart");
     config.requestRestart(1000);
 
-    // Stay in loop until main loop restarts us
+    // Stay in loop until the scheduled restart fires.
+    // Watchdog must be fed here since task() is the only task running.
     while (true) {
+        esp_task_wdt_reset();
+        config.checkRestart();
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
